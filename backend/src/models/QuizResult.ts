@@ -11,8 +11,8 @@ interface IQuizResults extends Document {
 }
 
 const QuizResultsSchema: Schema = new Schema({
-  quiz: { type: Schema.Types.ObjectId, ref: "Quiz" },
-  student: { type: Schema.Types.ObjectId, ref: "User" },
+  quiz: { type: mongoose.Schema.Types.ObjectId, ref: 'Quiz', required: true },
+  student: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   answers: [
     {
       question: { type: Schema.Types.ObjectId, ref: "Question" },
@@ -20,6 +20,7 @@ const QuizResultsSchema: Schema = new Schema({
     },
   ],
   score: { type: Number, required: true },
+  submittedAt: { type: Date, default: Date.now }
 });
 
 export const QuizResults = mongoose.model<IQuizResults>(

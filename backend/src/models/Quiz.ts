@@ -14,6 +14,7 @@ const QuizSchema: Schema = new Schema({
   questions: [{ type: Schema.Types.ObjectId, ref: "Question" }],
   createdBy: { type: Schema.Types.ObjectId, ref: "User" },
   expirationTime: { type: Date, required: true },
+  assignedClasses: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Class' }]
 });
 
 export const Quiz = mongoose.model<IQuiz>("Quiz", QuizSchema);

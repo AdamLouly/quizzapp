@@ -37,7 +37,7 @@ UserSchema.pre<IUser>("save", async function (next) {
 });
 
 UserSchema.methods.comparePassword = async function (
-  candidatePassword: string,
+  candidatePassword: string
 ): Promise<boolean> {
   return bcrypt.compare(candidatePassword, this.password);
 };

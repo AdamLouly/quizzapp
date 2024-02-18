@@ -1,32 +1,58 @@
-// src/models/User.ts
-
 import mongoose, { Document, Schema } from "mongoose";
 import bcrypt from "bcrypt";
 
-export interface IUser extends Document {
+interface IUser extends Document {
+  firstname: string;
+  lastname: string;
   username: string;
   email: string;
   password: string;
   role: "admin" | "teacher" | "student";
+  profilePicture?: string;
+  status: string;
+  emailVerified: boolean;
+  verificationToken: string;
+  verificationTokenExpires: Date;
+  resetPasswordToken: string;
+  resetPasswordExpires: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
-const UserSchema: Schema = new Schema({
-  username: { type: String, required: true, unique: true },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    validate: {
-      validator: function (value) {
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-      },
-      message: "Invalid email address format",
+const emailValidator = (value: string) =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
+const UserSchema: Schema = new Schema(
+  {
+    firstname: { type: String, required: true },
+    lastname: { type: String, required: true },
+    username: { type: String, required: true, unique: true },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      validate: [emailValidator, "Invalid email address format"],
     },
+    password: { type: String, required: true },
+    role: {
+      type: String,
+      required: true,
+      enum: ["admin", "teacher", "student"],
+    },
+    profilePicture: { type: String, required: false },
+    status: {
+      type: String,
+      required: true,
+      default: "inactive",
+      enum: ["active", "inactive"],
+    },
+    emailVerified: { type: Boolean, default: false },
+    verificationToken: { type: String, default: "" },
+    verificationTokenExpires: { type: Date, default: Date.now() },
+    resetPasswordToken: { type: String, default: "" },
+    resetPasswordExpires: { type: Date, default: Date.now() },
   },
-  password: { type: String, required: true },
-  role: { type: String, required: true, enum: ["teacher", "student"] },
-});
+  { timestamps: true },
+);
 
 UserSchema.pre<IUser>("save", async function (next) {
   if (this.isModified("password") || this.isNew) {
@@ -37,7 +63,7 @@ UserSchema.pre<IUser>("save", async function (next) {
 });
 
 UserSchema.methods.comparePassword = async function (
-  candidatePassword: string
+  candidatePassword: string,
 ): Promise<boolean> {
   return bcrypt.compare(candidatePassword, this.password);
 };

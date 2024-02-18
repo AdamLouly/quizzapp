@@ -10,9 +10,24 @@ export type AppOptions = {
 
 const app: FastifyPluginAsync<AppOptions> = async (
   fastify,
-  opts
+  opts,
 ): Promise<void> => {
   // Place here your custom code!
+  fastify
+    .decorate(
+      "verifyJWTandLevel",
+      function (request: any, reply: any, done: any): any {
+        // your validation logic
+        done(); // pass an error if the authentication fails
+      },
+    )
+    .decorate(
+      "verifyUserAndPassword",
+      function (request: any, reply: any, done: any): any {
+        // your validation logic
+        done(); // pass an error if the authentication fails
+      },
+    );
 
   // Do not touch the following lines
 

@@ -8,21 +8,35 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User } from "@/constants/data";
+import axios from "axios";
 import { Edit, MoreHorizontal, Trash } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-interface CellActionProps {
-  data: User;
-}
-
-export const CellAction: React.FC<CellActionProps> = ({ data }) => {
+export const CellAction: React.FC<{
+  data: any;
+  handleUserDelete: (userId: any) => void;
+}> = ({ data, handleUserDelete }) => {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const router = useRouter();
 
-  const onConfirm = async () => {};
+  const onConfirm = async () => {
+    setLoading(true);
+    try {
+      await axios.delete(
+        `${process.env.NEXT_PUBLIC_API_URL}/users/${data._id}`,
+      );
+      // Call handleUserDelete after successful deletion
+      handleUserDelete(data._id);
+      setLoading(false);
+      setOpen(false);
+      // Optionally, navigate or trigger a re-fetch of data here
+    } catch (error) {
+      console.error("Failed to delete user", error);
+      setLoading(false);
+    }
+  };
 
   return (
     <>
@@ -43,7 +57,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
 
           <DropdownMenuItem
-            onClick={() => router.push(`/dashboard/user/${data.id}`)}
+            onClick={() => router.push(`/dashboard/users/update/${data._id}`)}
           >
             <Edit className="mr-2 h-4 w-4" /> Update
           </DropdownMenuItem>

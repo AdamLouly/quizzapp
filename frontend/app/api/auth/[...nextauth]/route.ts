@@ -1,12 +1,26 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
+declare module "next-auth" {
+  interface User {
+    /* id: string;
+    firstname: string;
+    lastname: string;
+    username: string;
+    email: string;
+    role: "admin" | "teacher" | "student";
+    profilePicture?: string;
+    status: "active" | "inactive";
+    emailVerified: boolean; */
+  }
+}
+
 const handler = NextAuth({
   session: {
     strategy: "jwt",
   },
   pages: {
-    signIn: "/signin",
+    signIn: "/",
   },
   providers: [
     CredentialsProvider({
@@ -32,10 +46,24 @@ const handler = NextAuth({
 
         const data = await response.json();
 
+        if (data.token) {
+          data.user.token = data.token;
+        }
+
         return data.user;
       },
     }),
   ],
+  callbacks: {
+    jwt({ token, user }) {
+      if (user) token.role = user.role;
+      return token;
+    },
+    session({ session, token }) {
+      session.user.role = token.role;
+      return session;
+    },
+  },
 });
 
 export { handler as GET, handler as POST };

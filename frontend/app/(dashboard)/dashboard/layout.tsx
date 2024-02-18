@@ -11,12 +11,6 @@ export default function DashboardLayout({
 }) {
   const { data: session, status } = useSession();
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      signIn("credentials", { callbackUrl: "/signin" });
-    }
-  }, [status]);
-
   if (status === "loading") {
     return <div>Loading...</div>;
   }
@@ -24,7 +18,7 @@ export default function DashboardLayout({
   return (
     <>
       <Header />
-      <div className="flex h-screen overflow-hidden">
+      <div className="flex h-screen">
         <Sidebar />
         <main className="w-full pt-16">{children}</main>
       </div>

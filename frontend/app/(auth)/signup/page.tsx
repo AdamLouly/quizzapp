@@ -1,15 +1,20 @@
-import { Metadata } from "next";
+"use client";
 import Link from "next/link";
-import UserSignUpForm from "@/components/forms/user-register-form"; // Changed to sign-up form
+import UserSignUpForm from "@/components/forms/user-register-form";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-export const metadata: Metadata = {
-  title: "Sign Up",
-  description: "Sign up form.",
-};
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { useEffect } from "react";
 
 export default function SignUpPage() {
+  const user = useSession().data;
+  const router = useRouter();
+  useEffect(() => {
+    if (user) {
+      router.back();
+    }
+  }, [user, router]);
   return (
     <div className="relative h-screen flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0">
       <div className="relative hidden h-full flex-col bg-muted p-10 text-white dark:border-r lg:flex">
@@ -39,7 +44,7 @@ export default function SignUpPage() {
           </div>
           <UserSignUpForm />
           <Link
-            href="/signin"
+            href="/"
             className={cn(
               buttonVariants({ variant: "ghost" }),
               "font-medium text-stone-300 hover:text-white bg-indigo-500 hover:bg-indigo-600",

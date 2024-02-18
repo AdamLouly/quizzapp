@@ -1,10 +1,24 @@
-"use client";
 import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
-import { User } from "@/constants/data";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { CaretSortIcon } from "@radix-ui/react-icons";
 
-export const columns: ColumnDef<User>[] = [
+interface User {
+  id: string;
+  firstname: string;
+  lastname: string;
+  username: string;
+  email: string;
+  role: "admin" | "teacher" | "student";
+  profilePicture?: string;
+  status: "active" | "inactive";
+  emailVerified: boolean;
+}
+
+export const getColumns = (
+  handleUserDelete: (userId: any) => void,
+): ColumnDef<User>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -25,23 +39,93 @@ export const columns: ColumnDef<User>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "name",
-    header: "NAME",
+    accessorKey: "firstname", // Adjusted to match the User schema
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          FirstName
+          <CaretSortIcon className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
   },
   {
-    accessorKey: "company",
-    header: "COMPANY",
+    accessorKey: "lastname", // Adjusted to match the User schema
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          LastName
+          <CaretSortIcon className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+  },
+  {
+    accessorKey: "username",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          UserName
+          <CaretSortIcon className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+  },
+  {
+    accessorKey: "email",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Email
+          <CaretSortIcon className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
   },
   {
     accessorKey: "role",
-    header: "ROLE",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Role
+          <CaretSortIcon className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
   },
   {
     accessorKey: "status",
-    header: "STATUS",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Status
+          <CaretSortIcon className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
   },
   {
     id: "actions",
-    cell: ({ row }) => <CellAction data={row.original} />,
+    cell: ({ row }) => (
+      <CellAction handleUserDelete={handleUserDelete} data={row.original} />
+    ),
   },
 ];

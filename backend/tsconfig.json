@@ -7,9 +7,16 @@
   "extends": "./node_modules/fastify-tsconfig/tsconfig.json",
   "compilerOptions": {
     "outDir": "dist",
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "allowJs": true,
+    "noEmit": true,
+    "incremental": true,
+    "jsx": "preserve"
   },
   "include": [
     "src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
   ]
 }

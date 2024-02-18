@@ -16,6 +16,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import GoogleSignInButton from "../github-auth-button";
 import { signIn } from "next-auth/react";
+import { useToast } from "../ui/use-toast";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Enter a valid email address" }),
@@ -30,6 +31,7 @@ export default function UserAuthForm() {
   const form = useForm<UserFormValue>({
     resolver: zodResolver(formSchema),
   });
+  const { toast } = useToast();
 
   const onSubmit = async (data: UserFormValue) => {
     setLoading(true);
@@ -40,15 +42,20 @@ export default function UserAuthForm() {
     });
 
     if (response?.ok) {
-      router.push("/");
+      router.push("/dashboard");
     } else {
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: "Invalid Email or Password.",
+      });
       form.setError("email", {
         type: "manual",
-        message: "Invalid email or password",
+        message: "Invalid Email or Password",
       });
       form.setError("password", {
         type: "manual",
-        message: "Invalid email or password",
+        message: "Invalid Email or Password",
       });
     }
     setLoading(false);

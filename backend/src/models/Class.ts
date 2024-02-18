@@ -7,11 +7,14 @@ interface IClass extends Document {
   quizzes: mongoose.Types.ObjectId[];
 }
 
-const ClassSchema: Schema = new Schema({
-  name: { type: String, required: true },
-  teacher: { type: Schema.Types.ObjectId, ref: "User" },
-  students: [{ type: Schema.Types.ObjectId, ref: "User" }],
-  quizzes: [{ type: Schema.Types.ObjectId, ref: "Quiz" }],
-});
+const ClassSchema: Schema = new Schema(
+  {
+    name: { type: String, required: true },
+    teacher: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    students: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    quizzes: [{ type: Schema.Types.ObjectId, ref: "Quiz" }],
+  },
+  { timestamps: true },
+);
 
 export const Class = mongoose.model<IClass>("Class", ClassSchema);

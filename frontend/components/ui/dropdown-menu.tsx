@@ -9,6 +9,7 @@ import {
 } from "@radix-ui/react-icons";
 
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 const DropdownMenu = DropdownMenuPrimitive.Root;
 
@@ -84,17 +85,26 @@ const DropdownMenuItem = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> & {
     inset?: boolean;
   }
->(({ className, inset, ...props }, ref) => (
-  <DropdownMenuPrimitive.Item
-    ref={ref}
-    className={cn(
-      "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-      inset && "pl-8",
-      className,
-    )}
-    {...props}
-  />
-));
+>(({ className, inset, ...props }, ref) => {
+  const router = useRouter();
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (props.href) router.push(props.href);
+  };
+  return (
+    <DropdownMenuPrimitive.Item
+      onClick={handleClick}
+      ref={ref}
+      className={cn(
+        "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        inset && "pl-8",
+        className,
+      )}
+      {...props}
+    />
+  );
+});
 DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName;
 
 const DropdownMenuCheckboxItem = React.forwardRef<

@@ -6,6 +6,7 @@ import {
   ChevronRight,
   CircuitBoardIcon,
   Command,
+  CopyCheckIcon,
   CreditCard,
   File,
   FileText,
@@ -21,6 +22,7 @@ import {
   MoreVertical,
   Pizza,
   Plus,
+  SchoolIcon,
   Settings,
   SunMedium,
   Trash,
@@ -34,6 +36,8 @@ import {
 export type Icon = LucideIcon;
 
 export const Icons = {
+  class: SchoolIcon,
+  quiz: CopyCheckIcon,
   dashboard: LayoutDashboardIcon,
   logo: Command,
   login: LogIn,

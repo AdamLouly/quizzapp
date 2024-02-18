@@ -15,10 +15,19 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import GoogleSignInButton from "../github-auth-button";
 import { useRouter } from "next/navigation";
+import { useToast } from "../ui/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-// Schema now includes password confirmation
 const formSchema = z
   .object({
+    firstname: z.string().min(1, { message: "First name is required" }),
+    lastname: z.string().min(1, { message: "Last name is required" }),
     username: z.string().min(1, { message: "Username is required" }),
     email: z.string().email({ message: "Enter a valid email address" }),
     password: z
@@ -42,6 +51,9 @@ export default function UserSignUpForm() {
   const form = useForm<UserFormValue>({
     resolver: zodResolver(formSchema),
   });
+  const { toast } = useToast();
+
+  const { setError } = form;
 
   const onSubmit = async (data: UserFormValue) => {
     setLoading(true);
@@ -57,12 +69,34 @@ export default function UserSignUpForm() {
         },
       );
 
-      if (!response.ok) throw new Error("Signup failed");
+      const responseData = await response.json();
 
-      // redirect to the login page
-      router.push("/");
+      if (!response.ok) {
+        toast({
+          variant: "destructive",
+          title: "Uh oh! Something went wrong.",
+          description: "Invalid Information.",
+        });
+        // Handle server-side errors
+        if (responseData.errors) {
+          // If the server responds with an errors array
+          responseData.errors.forEach((error: any) => {
+            setError(error.field, {
+              type: "server",
+              message: error.message,
+            });
+          });
+        } else {
+          // General error (e.g., network issue or server configuration error)
+          throw new Error(responseData.message || "Signup failed");
+        }
+      } else {
+        // Registration successful, redirect to the login page
+        router.push("/sigin");
+      }
     } catch (error) {
       console.error("Signup error:", error);
+      // Optionally handle/display the error at a global level
     } finally {
       setLoading(false);
     }
@@ -72,7 +106,45 @@ export default function UserSignUpForm() {
     <>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <div className="space-y-4 w-full grid grid-cols-2 grid-rows-3 gap-4">
+          {/* Adjusted grid setup for responsiveness */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+            <FormField
+              control={form.control}
+              name="firstname"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>First Name</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="text"
+                      placeholder="Enter your first name..."
+                      disabled={loading}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="lastname"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Last Name</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="text"
+                      placeholder="Enter your last name..."
+                      disabled={loading}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {/* Ensure Username and Email are on the same row on larger screens */}
             <FormField
               control={form.control}
               name="username"
@@ -99,7 +171,6 @@ export default function UserSignUpForm() {
                   <FormLabel>Email</FormLabel>
                   <FormControl>
                     <Input
-                      className="mt-0"
                       type="email"
                       placeholder="Enter your email..."
                       disabled={loading}
@@ -110,11 +181,12 @@ export default function UserSignUpForm() {
                 </FormItem>
               )}
             />
+            {/* Password and Confirm Password will be each in their own row for clarity */}
             <FormField
               control={form.control}
               name="password"
               render={({ field }) => (
-                <FormItem className="row-start-2">
+                <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
                     <Input
@@ -132,7 +204,7 @@ export default function UserSignUpForm() {
               control={form.control}
               name="confirmPassword"
               render={({ field }) => (
-                <FormItem className="row-start-2">
+                <FormItem>
                   <FormLabel>Confirm Password</FormLabel>
                   <FormControl>
                     <Input
@@ -150,24 +222,28 @@ export default function UserSignUpForm() {
               control={form.control}
               name="role"
               render={({ field }) => (
-                <FormItem className="col-span-2 row-start-3">
-                  <FormLabel>Your Role</FormLabel>
-                  <FormControl>
-                    <select {...field}>
-                      <option value="student">Student</option>
-                      <option value="teacher">Teacher</option>
-                    </select>
-                  </FormControl>
+                <FormItem>
+                  <FormLabel>Role</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your role" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Student">Student</SelectItem>
+                      <SelectItem value="Teacher">Teacher</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </div>
-          <Button
-            disabled={loading}
-            className="mt-4 ml-auto w-full"
-            type="submit"
-          >
+          <Button disabled={loading} className="mt-4 w-full" type="submit">
             Sign Up
           </Button>
         </form>

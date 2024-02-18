@@ -6,7 +6,7 @@ export const UserActivity = () => {
   const [activities, setActivities] = useState([]);
 
   useEffect(() => {
-    const fetchActivities = async () => {
+    /* const fetchActivities = async () => {
       try {
         const response = await axios.get("Your_API_Endpoint/user_activities");
         setActivities(response.data);
@@ -14,7 +14,7 @@ export const UserActivity = () => {
         console.error("Failed to fetch user activities", error);
       }
     };
-    fetchActivities();
+    fetchActivities(); */
   }, []);
 
   return (

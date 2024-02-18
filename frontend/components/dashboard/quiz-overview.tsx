@@ -7,7 +7,7 @@ export const QuizOverview = () => {
   const [quizStats, setQuizStats] = useState([]);
 
   useEffect(() => {
-    const fetchQuizStats = async () => {
+    /* const fetchQuizStats = async () => {
       try {
         const response = await axios.get("Your_API_Endpoint/quiz_stats");
         setQuizStats(response.data);
@@ -15,7 +15,7 @@ export const QuizOverview = () => {
         console.error("Failed to fetch quiz statistics", error);
       }
     };
-    fetchQuizStats();
+    fetchQuizStats(); */
   }, []);
 
   const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];

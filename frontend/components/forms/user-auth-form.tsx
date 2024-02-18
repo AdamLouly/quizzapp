@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation";
 import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import GoogleSignInButton from "../github-auth-button";
+/* import GoogleSignInButton from "../github-auth-button"; */
 import { signIn } from "next-auth/react";
 import { useToast } from "../ui/use-toast";
 
@@ -119,7 +119,7 @@ export default function UserAuthForm() {
           </span>
         </div>
       </div>
-      <GoogleSignInButton />
+      {/* <GoogleSignInButton /> */}
     </>
   );
 }

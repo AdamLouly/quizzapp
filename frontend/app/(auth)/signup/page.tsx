@@ -1,4 +1,4 @@
-"use client";
+/* "use client";
 import Link from "next/link";
 import UserSignUpForm from "@/components/forms/user-register-form";
 import { buttonVariants } from "@/components/ui/button";
@@ -20,11 +20,9 @@ export default function SignUpPage() {
       <div className="relative hidden h-full flex-col bg-muted p-10 text-white dark:border-r lg:flex">
         <div className="absolute inset-0 bg-zinc-900" />
         <div className="relative z-20 flex items-center text-lg font-medium">
-          {/* Logo or Branding SVG */}
           Logo
         </div>
         <div className="relative z-20 mt-auto">
-          {/* Inspirational Quote or Additional Information */}
           <blockquote className="space-y-2">
             <p className="text-lg">
               “Unlock your potential with seamless collaboration and
@@ -75,3 +73,4 @@ export default function SignUpPage() {
     </div>
   );
 }
+ */

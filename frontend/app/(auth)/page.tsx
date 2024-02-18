@@ -86,7 +86,7 @@ export default function AuthenticationPage() {
                 </Link>
                 .
               </p>
-              <div className="mt-4 text-center">
+              {/* <div className="mt-4 text-center">
                 <Link
                   href="/signup"
                   className={cn(
@@ -97,7 +97,7 @@ export default function AuthenticationPage() {
                 >
                   Don't have an account? Sign up
                 </Link>
-              </div>
+              </div> */}
             </>
           )}
         </div>

@@ -13,7 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import GoogleSignInButton from "../github-auth-button";
+/* import GoogleSignInButton from "../github-auth-button"; */
 import { useRouter } from "next/navigation";
 import { useToast } from "../ui/use-toast";
 import {
@@ -249,7 +249,7 @@ export default function UserSignUpForm() {
         </form>
       </Form>
       <div className="text-center text-xs uppercase mt-4">Or continue with</div>
-      <GoogleSignInButton />
+      {/* <GoogleSignInButton /> */}
     </>
   );
 }

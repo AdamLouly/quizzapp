@@ -4,7 +4,7 @@ import * as dotenv from "dotenv";
 // Require the framework
 import Fastify from "fastify";
 
-import { initGraphql } from "./graphql";
+/* import { initGraphql } from "./graphql"; */
 import { initSwagger } from "./swagger";
 
 import app from "./app";
@@ -22,7 +22,7 @@ const server = Fastify({
 void server.register(app);
 
 // Init graphql
-void initGraphql(server);
+/* void initGraphql(server); */
 
 // Init Swagger
 void initSwagger(server);

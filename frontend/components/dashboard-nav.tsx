@@ -9,7 +9,7 @@ import { NavItem } from "@/types";
 import { Dispatch, SetStateAction } from "react";
 
 interface DashboardNavProps {
-  items: NavItem[];
+  items: any;
   setOpen?: Dispatch<SetStateAction<boolean>>;
 }
 
@@ -22,8 +22,8 @@ export function DashboardNav({ items, setOpen }: DashboardNavProps) {
 
   return (
     <nav className="grid items-start gap-2">
-      {items.map((item, index) => {
-        const Icon = Icons[item.icon || "arrowRight"];
+      {items.map((item: any, index: any) => {
+        const Icon: any = Icons[item.icon || "arrowRight"];
         return (
           item.href && (
             <Link

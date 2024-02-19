@@ -22,6 +22,6 @@ services:
     environment:
       NODE_ENV: production
       SERVER_HOSTNAME: 0.0.0.0
-      MONGO_URI: mongodb+srv://achref:Achref2019@cluster0.8bmkr.mongodb.net/quizapp?retryWrites=true&w=majority
+      MONGO_URI: mongodb+srv://vercel-admin-user:quizzapp@cluster0.8bmkr.mongodb.net/quizapp?retryWrites=true&w=majority
       JWT_SECRET: 6az85ef24g86r68dgvd@$6az85ef24g86r68dgvd@$6az85ef24g86r68dgvd
     command: yarn start:prod

@@ -1,8 +1,6 @@
 "use client";
 import Link from "next/link";
 import UserAuthForm from "@/components/forms/user-auth-form";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -32,6 +30,14 @@ export default function AuthenticationPage() {
           <h2 className="text-3xl font-semibold mb-2">Welcome Back</h2>
           <p className="text-gray-600 mb-6">Sign in to your account</p>
           <UserAuthForm />
+          <div className="text-center mt-6">
+            <Link
+              href="/forgot-password"
+              className="text-blue-600 hover:underline"
+            >
+              Forgot Password
+            </Link>
+          </div>
           <p className="text-xs text-gray-600 text-center mt-4">
             By clicking continue, you agree to our{" "}
             <Link className="text-blue-600" href="#">

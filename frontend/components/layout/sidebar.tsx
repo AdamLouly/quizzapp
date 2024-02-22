@@ -71,7 +71,7 @@ function UnderlineIcon(props: any) {
 const navItems = [
   {
     title: "Client Settings",
-    href: "/dashboard/settings",
+    href: "/dashboard/clients",
     icon: LayoutGridIcon,
     roles: ["admin"],
   },

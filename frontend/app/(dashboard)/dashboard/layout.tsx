@@ -2,7 +2,8 @@
 import { useSession, signIn } from "next-auth/react";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
+import Loading from "./loading";
 
 export default function DashboardLayout({
   children,
@@ -20,7 +21,9 @@ export default function DashboardLayout({
       <Header />
       <div className="flex h-screen">
         <Sidebar />
-        <main className="w-full pt-16">{children}</main>
+        <Suspense fallback={<Loading />}>
+          <main className="w-full pt-16">{children}</main>
+        </Suspense>
       </div>
     </>
   );

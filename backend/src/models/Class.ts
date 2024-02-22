@@ -10,9 +10,10 @@ interface IClass extends Document {
 const ClassSchema: Schema = new Schema(
   {
     name: { type: String, required: true },
-    teacher: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    teacher: { type: Schema.Types.ObjectId, ref: "User" },
     students: [{ type: Schema.Types.ObjectId, ref: "User" }],
     quizzes: [{ type: Schema.Types.ObjectId, ref: "Quiz" }],
+    client: { type: Schema.Types.ObjectId, ref: "Client" },
   },
   { timestamps: true },
 );

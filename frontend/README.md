@@ -1,8 +1,8 @@
 # Frontend
+
 ## Installation
 
 Copy the env variables into .env.local
-
 
 To run this project
 

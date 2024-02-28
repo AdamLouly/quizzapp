@@ -1,4 +1,4 @@
-import { FastifyPluginAsync } from "fastify";
+import { type FastifyPluginAsync } from "fastify";
 import { Class } from "../../models/Class";
 
 const classRoutes: FastifyPluginAsync = async (fastify, opts) => {
@@ -7,7 +7,7 @@ const classRoutes: FastifyPluginAsync = async (fastify, opts) => {
   }>(
     "/",
     {
-      // preValidation: [fastify.authenticate] // preValidation as part of the route options
+      // PreValidation: [fastify.authenticate] // preValidation as part of the route options
     },
     async (request, reply) => {
       const offset = request.query.offset
@@ -41,8 +41,9 @@ const classRoutes: FastifyPluginAsync = async (fastify, opts) => {
         "teacher students clients",
       );
       if (!classDoc) {
-        return reply.code(404).send({ message: "Class not found" });
+        return await reply.code(404).send({ message: "Class not found" });
       }
+
       reply.send({ class: classDoc });
     } catch (error) {
       reply.code(500).send(error);
@@ -60,8 +61,9 @@ const classRoutes: FastifyPluginAsync = async (fastify, opts) => {
           { new: true },
         );
         if (!updatedClass) {
-          return reply.code(404).send({ message: "Class not found" });
+          return await reply.code(404).send({ message: "Class not found" });
         }
+
         reply.send(updatedClass);
       } catch (error) {
         reply.code(500).send(error);
@@ -74,8 +76,9 @@ const classRoutes: FastifyPluginAsync = async (fastify, opts) => {
     try {
       const result = await Class.findByIdAndDelete(request.params.id);
       if (!result) {
-        return reply.code(404).send({ message: "Class not found" });
+        return await reply.code(404).send({ message: "Class not found" });
       }
+
       reply.code(204).send();
     } catch (error) {
       reply.code(500).send(error);

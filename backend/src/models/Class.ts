@@ -5,7 +5,7 @@ type IClass = {
   teacher: mongoose.Types.ObjectId;
   students: mongoose.Types.ObjectId[];
   quizzes: mongoose.Types.ObjectId[];
-} & Document
+} & Document;
 
 const ClassSchema: Schema = new Schema(
   {

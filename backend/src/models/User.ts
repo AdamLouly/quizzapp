@@ -17,7 +17,7 @@ export type IUser = {
   resetPasswordToken: string;
   resetPasswordExpires: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
-} & Document
+} & Document;
 
 const emailValidator = (value: string) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);

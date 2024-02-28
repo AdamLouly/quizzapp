@@ -2,7 +2,7 @@ import { type FastifyPluginAsync } from "fastify";
 import { Quiz } from "../../models/Quiz";
 import { User } from "../../models/User";
 
-interface QuizCreationBody {
+type QuizCreationBody = {
   title: string;
   description: string;
   questions: Question[]; // Define `Question` based on your quiz structure
@@ -11,14 +11,14 @@ interface QuizCreationBody {
   due_date: any;
   duration: any;
   createdByEmail: any;
-}
+};
 
 // Example Question interface (adjust according to your needs)
-interface Question {
+type Question = {
   question: string;
   answers: string[];
   correct_answer: string;
-}
+};
 
 const quizRoutes: FastifyPluginAsync = async (fastify, opts) => {
   fastify.get<{

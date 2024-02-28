@@ -8,7 +8,7 @@ type IQuizResults = {
     selectedOption: string;
   }>;
   score: number;
-} & Document
+} & Document;
 
 const QuizResultSchema = new Schema(
   {

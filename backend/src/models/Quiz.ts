@@ -5,7 +5,7 @@ type IQuestion = {
   answers: string[];
   correct_answer: number;
   points: number;
-}
+};
 
 type IQuiz = {
   name: string;
@@ -16,7 +16,7 @@ type IQuiz = {
   classId: Schema.Types.ObjectId;
   dueDate: Date;
   timeLimit?: number;
-} & Document
+} & Document;
 
 const QuestionSchema: Schema = new Schema({
   question: { type: String, required: true },

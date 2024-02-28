@@ -5,7 +5,7 @@ import { Card, Pagination } from "@nextui-org/react";
 import { CardContent } from "@/components/ui/card";
 import { useSession } from "next-auth/react";
 import CreateQuizDialog from "@/components/quiz/create-quiz-dialog";
-import UpdateQuizDialog from "@/components/quiz/update-quiz-dialog";
+import UpdateQuestionsDialog from "@/components/quiz/update-questions-dialog";
 import { useToast } from "@/components/ui/use-toast";
 
 const breadcrumbItems = [{ title: "Quizzes", link: "/dashboard/quizzes" }];
@@ -61,7 +61,6 @@ export default function Page() {
             handleQuizCreated={handleQuizCreated}
             open={open}
             setOpen={setOpen}
-            onOpenChange={setOpen}
           />
         </div>
         <div className="flex flex-col gap-4 md:gap-6">
@@ -82,7 +81,7 @@ export default function Page() {
                       {quiz.status ? "Published" : "Draft"}{" "}
                     </span>
                     <div className="flex items-center">
-                      <UpdateQuizDialog />
+                      <UpdateQuestionsDialog />
                     </div>
                   </div>
                 </div>

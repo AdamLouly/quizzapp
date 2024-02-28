@@ -3,10 +3,20 @@ import { Dialog, DialogContent, DialogTrigger } from "../ui/dialog";
 import { Textarea } from "../ui/textarea";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import { Check } from "lucide-react";
 
-export default function UpdateQuizDialog() {
+export default function UpdateQuestionsDialog() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [questions, setQuestions] = useState([
+    {
+      question: "What is the capital of France?",
+      answers: [
+        { answer: "Paris", isCorrect: true },
+        { answer: "London", isCorrect: false },
+        { answer: "Berlin", isCorrect: false },
+        { answer: "Madrid", isCorrect: false },
+      ],
+    },
     {
       question: "What is the capital of France?",
       answers: [
@@ -76,17 +86,23 @@ export default function UpdateQuizDialog() {
     }`;
 
   const correctButtonStyle = (isCorrect) =>
-    `px-6 py-2 rounded-full text-sm font-medium shadow transition-colors ${
+    `px-6 py-2 rounded-full text-sm font-medium shadow transition-colors flex items-center gap-2 ${
       isCorrect
         ? "bg-green-500 hover:bg-green-600 text-white"
-        : "bg-gray-200 hover:bg-gray-300 text-gray-800"
+        : "bg-red-200 hover:bg-green-600 hover:text-white text-white>"
     }`;
+
+  const isLastQuestion = currentQuestionIndex === questions.length - 1;
+
+  const handleEditQuestions = () => {
+
+  }
 
   return (
     <Dialog>
       <DialogTrigger asChild>
         <Button className="text-white bg-blue-600 hover:bg-blue-700 font-semibold rounded-lg text-sm px-4 py-2 transition-colors">
-          Update Quiz
+          Update Questions
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -116,26 +132,37 @@ export default function UpdateQuizDialog() {
                   className={correctButtonStyle(answer.isCorrect)}
                   onClick={() => handleSetCorrect(index)}
                 >
-                  {answer.isCorrect ? "Correct" : "Set Correct"}
+                  {answer.isCorrect ? <Check /> : <Check />}
                 </Button>
               </div>
             ))}
           </div>
-          <div className="flex justify-between">
+          <div className="mt-auto grid gap-4 sm:grid-cols-2">
             <Button
-              className="text-gray-800 bg-gray-200 hover:bg-gray-300 font-medium rounded-lg text-sm px-5 py-2 transition-colors"
+              className="w-full text-gray-800 bg-gray-200 hover:bg-gray-300 font-medium rounded-lg text-sm px-5 py-2 transition-colors"
               onClick={handlePrevious}
               disabled={currentQuestionIndex === 0}
             >
               Previous
             </Button>
-            <Button
-              className="text-white bg-blue-600 hover:bg-blue-700 font-medium rounded-lg text-sm px-5 py-2 transition-colors"
-              onClick={handleNext}
-              disabled={currentQuestionIndex === questions.length - 1}
-            >
-              Next
-            </Button>
+            {!isLastQuestion ? (
+              <Button
+                variant="outline"
+                className="w-full text-white bg-blue-600 hover:bg-blue-700 font-medium rounded-lg text-sm px-5 py-2 transition-colors"
+                onClick={handleNext}
+                disabled={currentQuestionIndex === questions.length - 1}
+              >
+                Next
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                className="w-full text-white bg-blue-600 hover:bg-blue-700 hover:text-white font-medium rounded-lg text-sm px-5 py-2 transition-colors"
+                onClick={handleEditQuestions()}
+              >
+                Submit
+              </Button>
+            )}
           </div>
         </div>
       </DialogContent>

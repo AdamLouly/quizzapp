@@ -31,12 +31,10 @@ export default function CreateQuizDialog({
   handleQuizCreated,
   open,
   setOpen,
-  onOpenChange,
 }: {
   handleQuizCreated: any;
   open: any;
   setOpen: any;
-  onOpenChange: any;
 }) {
   const [classes, setClasses] = useState([]);
   const [selectedClass, setSelectedClass] = useState("");

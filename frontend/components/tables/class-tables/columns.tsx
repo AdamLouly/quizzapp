@@ -6,7 +6,6 @@ interface Class {
   name: string;
   teacher: string;
   students: string[];
-  quizzes: string[];
 }
 
 export const getColumns = (
@@ -14,7 +13,6 @@ export const getColumns = (
   teachers: Record<string, string>,
   clients: Record<string, string>,
   students: Record<string, string>,
-  quizzes: Record<string, string>,
 ): ColumnDef<Class>[] => [
   {
     id: "select",
@@ -45,15 +43,6 @@ export const getColumns = (
       info
         .getValue()
         .map((studentId: string) => students[studentId] || "None")
-        .join(", "),
-  },
-  {
-    accessorKey: "quizzes",
-    header: () => "Quizzes",
-    cell: (info: any) =>
-      info
-        .getValue()
-        .map((quizId: string) => quizzes[quizId] || "None")
         .join(", "),
   },
   {

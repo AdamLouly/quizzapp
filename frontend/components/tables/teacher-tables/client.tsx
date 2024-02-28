@@ -1,4 +1,3 @@
-// client.tsx
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -9,6 +8,8 @@ import { Separator } from "@/components/ui/separator";
 import { Plus } from "lucide-react";
 import axios from "axios";
 import { getColumns } from "./columns";
+import { Skeleton } from "@nextui-org/react";
+import { useToast } from "@/components/ui/use-toast";
 
 export const UserClient: React.FC = () => {
   const [teachers, setteachers] = useState([]);
@@ -17,6 +18,7 @@ export const UserClient: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [totalteachers, setTotalteachers] = useState(0);
   const router = useRouter();
+  const { toast } = useToast();
 
   const totalPages = Math.ceil(totalteachers / pageSize);
 
@@ -46,11 +48,15 @@ export const UserClient: React.FC = () => {
     fetchData();
   }, [currentPage, pageSize]);
 
-  const handleStudentDelete = (studentId: any) => {
+  const handleTeaherDelete = (studentId: any) => {
     setteachers(teachers.filter((student: any) => student._id !== studentId));
+    toast({
+      variant: "success",
+      title: "Teacher Deleted.",
+    });
   };
 
-  const columns = getColumns(handleStudentDelete);
+  const columns = getColumns(handleTeaherDelete);
 
   return (
     <>
@@ -67,9 +73,7 @@ export const UserClient: React.FC = () => {
         </Button>
       </div>
       <Separator />
-      {loading ? (
-        <div>Loading...</div>
-      ) : (
+      <Skeleton isLoaded={!loading}>
         <DataTable
           searchKey="username"
           columns={columns}
@@ -78,7 +82,7 @@ export const UserClient: React.FC = () => {
           totalPages={totalPages}
           onPageChange={handlePageChange}
         />
-      )}
+      </Skeleton>
     </>
   );
 };

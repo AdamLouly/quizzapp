@@ -17,7 +17,7 @@ export default function ClientUpdatePage() {
   const [classData, setClassData] = useState({
     name: "",
     teacher: "",
-    clientId: "",
+    client: "",
     students: [],
     quizzes: [],
   });
@@ -33,7 +33,6 @@ export default function ClientUpdatePage() {
           );
           setClassData(response.data.class);
         } catch (error) {
-          console.error("Failed to fetch class data:", error);
           toast({
             variant: "destructive",
             title: "Failed to fetch class data",

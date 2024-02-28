@@ -12,9 +12,7 @@ interface Client {
   phone: string;
 }
 
-export const getColumns = (
-  handleClientAction: (clientId: any) => void,
-): ColumnDef<Client>[] => [
+export const getColumns = (): ColumnDef<Client>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -85,7 +83,7 @@ export const getColumns = (
   {
     id: "actions",
     cell: ({ row }) => (
-      <CellAction handleClientDelete={handleClientAction} data={row.original} />
+      <CellAction data={row.original} />
     ),
   },
 ];

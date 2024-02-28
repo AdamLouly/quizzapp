@@ -1,5 +1,4 @@
 "use client";
-import { AlertModal } from "@/components/modal/alert-modal";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -8,44 +7,16 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import axios from "axios";
-import { Edit, MoreHorizontal, Trash } from "lucide-react";
+import { Edit, MoreHorizontal } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 
 export const CellAction: React.FC<{
   data: any;
-  handleClientDelete: (userId: any) => void;
-}> = ({ data, handleClientDelete }) => {
-  const [loading, setLoading] = useState(false);
-  const [open, setOpen] = useState(false);
+}> = ({ data }) => {
   const router = useRouter();
-
-  const onConfirm = async () => {
-    setLoading(true);
-    try {
-      await axios.delete(
-        `${process.env.NEXT_PUBLIC_API_URL}/clients/${data._id}`,
-      );
-      // Call handleUserDelete after successful deletion
-      handleClientDelete(data._id);
-      setLoading(false);
-      setOpen(false);
-      // Optionally, navigate or trigger a re-fetch of data here
-    } catch (error) {
-      console.error("Failed to delete user", error);
-      setLoading(false);
-    }
-  };
 
   return (
     <>
-      <AlertModal
-        isOpen={open}
-        onClose={() => setOpen(false)}
-        onConfirm={onConfirm}
-        loading={loading}
-      />
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 p-0">
@@ -60,9 +31,6 @@ export const CellAction: React.FC<{
             onClick={() => router.push(`/dashboard/clients/update/${data._id}`)}
           >
             <Edit className="mr-2 h-4 w-4" /> Update
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setOpen(true)}>
-            <Trash className="mr-2 h-4 w-4" /> Delete
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

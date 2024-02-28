@@ -39,7 +39,7 @@ export default function ForgotPasswordPage() {
         data,
       );
       toast({
-        variant: "default",
+        variant: "success",
         title: "If an account with that email exists, we sent you an email.",
       });
       router.push("/");

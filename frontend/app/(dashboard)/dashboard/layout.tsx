@@ -1,8 +1,8 @@
 "use client";
-import { useSession, signIn } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
-import { Suspense, useEffect } from "react";
+import { Suspense } from "react";
 import Loading from "./loading";
 
 export default function DashboardLayout({
@@ -10,7 +10,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
 
   if (status === "loading") {
     return <div>Loading...</div>;
@@ -19,8 +19,10 @@ export default function DashboardLayout({
   return (
     <>
       <Header />
-      <div className="flex h-screen">
-        <Sidebar />
+      <div className="flex">
+        <Suspense fallback={<Loading />}>
+          <Sidebar />
+        </Suspense>
         <Suspense fallback={<Loading />}>
           <main className="w-full pt-16">{children}</main>
         </Suspense>

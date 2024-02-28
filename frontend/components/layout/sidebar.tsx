@@ -1,5 +1,10 @@
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { Card, Skeleton } from "@nextui-org/react";
+import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
+import { buttonVariants } from "../ui/button";
+import { cn } from "@/lib/utils";
 
 function LayoutGridIcon(props: any) {
   return (
@@ -67,59 +72,86 @@ function UnderlineIcon(props: any) {
   );
 }
 
-// Adjusted navItems to include roles and icons
-const navItems = [
+const navSections = [
   {
-    title: "Client Settings",
-    href: "/dashboard/clients",
-    icon: LayoutGridIcon,
-    roles: ["admin"],
+    title: "Configuration",
+    items: [
+      {
+        title: "Client Settings",
+        href: "/dashboard/clients",
+        icon: LayoutGridIcon,
+        roles: ["admin"],
+      },
+      {
+        title: "Teachers",
+        href: "/dashboard/teachers",
+        icon: SchoolIcon,
+        roles: ["admin"],
+      },
+      {
+        title: "Students",
+        href: "/dashboard/students",
+        icon: SchoolIcon,
+        roles: ["admin"],
+      },
+      {
+        title: "Classes",
+        href: "/dashboard/classes",
+        icon: UnderlineIcon,
+        roles: ["admin"],
+      },
+    ],
   },
   {
-    title: "Teachers",
-    href: "/dashboard/teachers",
-    icon: SchoolIcon,
-    roles: ["admin"],
+    title: "Education",
+    items: [
+      {
+        title: "Quizzes",
+        href: "/dashboard/quizzes",
+        icon: SchoolIcon,
+        roles: ["teacher", "student"],
+      },
+    ],
   },
-  {
-    title: "Students",
-    href: "/dashboard/students",
-    icon: SchoolIcon,
-    roles: ["admin"],
-  },
-  {
-    title: "Classes",
-    href: "/dashboard/classes",
-    icon: UnderlineIcon,
-    roles: ["admin"],
-  },
-  // Add more roles and nav items as needed
 ];
 
 export default function Sidebar() {
   const { data: session } = useSession();
   const userRole = session?.user?.role || "";
-
-  // Filter navItems based on user role
-  const filteredNavItems = navItems.filter((item) =>
-    item.roles.includes(userRole),
-  );
+  const pathname = usePathname();
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md w-64 relative hidden h-screen border-r pt-16 lg:block w-72">
-      <h2 className="text-lg font-semibold mb-4">Configuration</h2>
-      <nav className="flex flex-col gap-2">
-        {filteredNavItems.map((item, index) => (
-          <Link
-            className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-gray-100"
-            key={index}
-            href={item.href}
-          >
-            <item.icon className="text-gray-600 h-5 w-5 mr-3" />
-            {item.title}
-          </Link>
-        ))}
-      </nav>
+    <div className="bg-white p-4 rounded-lg shadow-md w-64 relative hidden border-r pt-16 lg:block w-72">
+      {navSections.map((section, sectionIndex) => {
+        // Filter items based on user role
+        const filteredItems = section.items.filter((item) =>
+          item.roles.includes(userRole),
+        );
+
+        if (filteredItems.length > 0) {
+          return (
+            <div key={sectionIndex}>
+              <h2 className="text-lg font-semibold mb-4">{section.title}</h2>
+              <nav className="flex flex-col gap-2">
+                {filteredItems.map((item, itemIndex) => (
+                  <Link
+                    className={cn(
+                      "flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-gray-100",
+                      pathname.includes(item.href) ? "bg-gray-200" : "",
+                    )}
+                    key={itemIndex}
+                    href={item.href}
+                  >
+                    <item.icon className="text-gray-600 h-5 w-5 mr-3" />
+                    {item.title}
+                  </Link>
+                ))}
+              </nav>
+            </div>
+          );
+        }
+        return null;
+      })}
     </div>
   );
 }

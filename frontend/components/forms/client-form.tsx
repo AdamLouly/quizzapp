@@ -67,7 +67,7 @@ export const ClientForm: React.FC<{
         data: data,
       });
       toast({
-        variant: "default",
+        variant: "success",
         title: `Client ${initialData ? "updated" : "created"} successfully.`,
       });
       router.push("/dashboard/clients");
@@ -86,7 +86,7 @@ export const ClientForm: React.FC<{
   return (
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4 mb-4">
           <FormField
             control={form.control}
             name="name"

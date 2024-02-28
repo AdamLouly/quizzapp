@@ -16,16 +16,16 @@ const app: FastifyPluginAsync<AppOptions> = async (
   fastify
     .decorate(
       "verifyJWTandLevel",
-      function (request: any, reply: any, done: any): any {
-        // your validation logic
-        done(); // pass an error if the authentication fails
+      (request: any, reply: any, done: any): any => {
+        // Your validation logic
+        done(); // Pass an error if the authentication fails
       },
     )
     .decorate(
       "verifyUserAndPassword",
-      function (request: any, reply: any, done: any): any {
-        // your validation logic
-        done(); // pass an error if the authentication fails
+      (request: any, reply: any, done: any): any => {
+        // Your validation logic
+        done(); // Pass an error if the authentication fails
       },
     );
 

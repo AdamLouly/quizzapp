@@ -1,27 +1,16 @@
-"use client";
 import Link from "next/link";
 import UserAuthForm from "@/components/forms/user-auth-form";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import { FlagIcon } from "lucide-react";
 
 export default function AuthenticationPage() {
-  const user = useSession().data;
-  const router = useRouter();
-  useEffect(() => {
-    if (user) {
-      router.back();
-    }
-  }, [user, router]);
   return (
     <div className="min-h-screen bg-gray-100 flex">
       <div className="w-1/2 bg-black text-white flex flex-col justify-center p-12 space-y-4">
         <FlagIcon className="h-8 w-8 text-white" />
         <h1 className="text-4xl font-bold">Logo</h1>
         <p className="text-lg">
-          "Unlock your potential with seamless collaboration and productivity
-          tools."
+          &quot;Unlock your potential with seamless collaboration and
+          productivity tools.&quot;
         </p>
         <p className="text-right mt-4">- The QuizzApp Team</p>
       </div>

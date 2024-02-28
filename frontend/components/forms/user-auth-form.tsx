@@ -34,15 +34,21 @@ export default function UserAuthForm() {
 
   const onSubmit = async (data: UserFormValue) => {
     setLoading(true);
-    const response = await signIn("credentials", {
+    const response: any = await signIn("credentials", {
       email: data.email,
       password: data.password,
       redirect: false,
     });
 
     if (response?.ok) {
+      toast({
+        variant: "success",
+        title: "Welcome Back!.",
+        description: "Successfully signed in.",
+      });
       router.push("/dashboard");
     } else {
+      console.log(response);
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",

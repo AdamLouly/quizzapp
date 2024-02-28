@@ -15,8 +15,8 @@ import { useState } from "react";
 
 export const CellAction: React.FC<{
   data: any;
-  handleTeacherDelete: (userId: any) => void;
-}> = ({ data, handleTeacherDelete }) => {
+  handleStudentDelete: (userId: any) => void;
+}> = ({ data, handleStudentDelete }) => {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const router = useRouter();
@@ -28,7 +28,7 @@ export const CellAction: React.FC<{
         `${process.env.NEXT_PUBLIC_API_URL}/users/${data._id}`,
       );
       // Call handleUserDelete after successful deletion
-      handleTeacherDelete(data._id);
+      handleStudentDelete(data._id);
       setLoading(false);
       setOpen(false);
       // Optionally, navigate or trigger a re-fetch of data here

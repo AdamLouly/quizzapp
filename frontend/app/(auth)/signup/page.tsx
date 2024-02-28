@@ -1,20 +1,9 @@
-/* "use client";
-import Link from "next/link";
+/* import Link from "next/link";
 import UserSignUpForm from "@/components/forms/user-register-form";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
-import { useEffect } from "react";
 
 export default function SignUpPage() {
-  const user = useSession().data;
-  const router = useRouter();
-  useEffect(() => {
-    if (user) {
-      router.back();
-    }
-  }, [user, router]);
   return (
     <div className="relative h-screen flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0">
       <div className="relative hidden h-full flex-col bg-muted p-10 text-white dark:border-r lg:flex">
@@ -25,8 +14,8 @@ export default function SignUpPage() {
         <div className="relative z-20 mt-auto">
           <blockquote className="space-y-2">
             <p className="text-lg">
-              “Unlock your potential with seamless collaboration and
-              productivity tools.”
+            &quot;Unlock your potential with seamless collaboration and
+              productivity tools.&quot;
             </p>
             <footer className="text-sm">- The QuizzApp Team</footer>
           </blockquote>
@@ -73,4 +62,5 @@ export default function SignUpPage() {
     </div>
   );
 }
+
  */

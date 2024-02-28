@@ -1,9 +1,5 @@
-// page.tsx
-// @ts-ignore
 import React from "react";
-// @ts-ignore
 import BreadCrumb from "@/components/breadcrumb";
-// @ts-ignore
 import { UserClient } from "@/components/tables/student-tables/client";
 
 const breadcrumbItems = [{ title: "Student", link: "/dashboard/students" }];

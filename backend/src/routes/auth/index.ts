@@ -1,10 +1,14 @@
 import type { FastifyPluginAsync } from "fastify";
-import { IUser, User } from "../../models/User";
+import { type IUser, User } from "../../models/User";
 import { sendEmail } from "../../utils/mailer";
 import { randomBytes } from "crypto";
 import { promisify } from "util";
+import * as bcrypt from "bcrypt";
 
-const example: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
+const example: FastifyPluginAsync = async (
+  fastify: any,
+  _opts,
+): Promise<void> => {
   const registerSchema = {
     body: {
       type: "object",
@@ -53,9 +57,26 @@ const example: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
     },
   };
 
+  const updateUserSchema = {
+    body: {
+      type: "object",
+      required: ["firstname", "lastname", "username", "email", "password"],
+      properties: {
+        firstname: { type: "string", minLength: 1 },
+        lastname: { type: "string", minLength: 1 },
+        username: { type: "string", minLength: 1 },
+        email: { type: "string", format: "email" },
+        password: { type: "string", minLength: 6 },
+        newEmail: { type: "string", format: "email" },
+        oldEmail: { type: "string", format: "email" },
+      },
+      additionalProperties: false,
+    },
+  };
+
   fastify.post("/register", {
     schema: registerSchema,
-    handler: async (request: any, reply: any) => {
+    async handler(request: any, reply: any) {
       try {
         const { firstname, lastname, username, email, password, role } =
           request.body as IUser;
@@ -70,13 +91,15 @@ const example: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
             ],
           });
         }
-        const existingUser = await User.findOne({ email: email }).exec();
+
+        const existingUser = await User.findOne({ email }).exec();
         if (existingUser) {
           return reply.code(400).send({
             message: "Validation errors",
             errors: [{ field: "email", message: "Email already exists" }],
           });
         }
+
         const user = new User({
           firstname,
           lastname,
@@ -103,7 +126,7 @@ const example: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
 
   fastify.post("/login", {
     schema: loginSchema,
-    handler: async (request, reply) => {
+    async handler(request: any, reply: any) {
       try {
         const { email, password } = request.body as Pick<
           IUser,
@@ -112,22 +135,42 @@ const example: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
         const user = await User.findOne({ email }).exec();
 
         if (!user || !(await user.comparePassword(password))) {
-          return reply.code(401).send({ message: "Invalid email or password" });
+          return await reply
+            .code(401)
+            .send({ message: "Invalid email or password" });
+        }
+
+        if (user.status != "active") {
+          return await reply
+            .code(401)
+            .send({ message: "Your account is not active" });
         }
 
         const token = fastify.jwt.sign({
           id: user.id,
           username: user.username,
+          firstname: user.firstname,
+          lastname: user.lastname,
           email: user.email,
           role: user.role,
+          status: user.status,
+          emailVerified: user.emailVerified,
+          password: user.password,
+          profilePicture: user.profilePicture,
         });
         reply.send({
           token,
           user: {
             id: user.id,
             username: user.username,
+            firstname: user.firstname,
+            lastname: user.lastname,
             email: user.email,
             role: user.role,
+            status: user.status,
+            emailVerified: user.emailVerified,
+            password: user.password,
+            profilePicture: user.profilePicture,
           },
         });
       } catch (error) {
@@ -140,15 +183,16 @@ const example: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
 
   fastify.post("/forgot-password", {
     schema: ForgotPasswordSchema,
-    handler: async (request: any, reply) => {
+    async handler(request: any, reply: any) {
       try {
         const { email } = request.body;
         const user = await User.findOne({ email });
         if (!user) {
-          return reply.code(404).send({ message: "Verify your credentials" });
+          return await reply
+            .code(404)
+            .send({ message: "Verify your credentials" });
         }
 
-        // Generate reset password token and set expiration
         const token = (await randomBytesAsync(24)).toString("hex");
         user.resetPasswordToken = token;
         user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 24 * 1000);
@@ -157,15 +201,14 @@ const example: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
 
         const link = `${process.env.CLIENT_URL}/reset-password?token=${token}&id=${user._id}`;
 
-        // Assume sendEmail returns a promise
         await sendEmail(
           user.email,
           "Password Reset Request",
-          { username: user.username, link: link },
+          { username: user.username, link },
           "./template/requestResetPassword.handlebars",
         );
 
-        return reply.code(200).send({
+        return await reply.code(200).send({
           message:
             "If the email is associated with an account, a reset password link has been sent.",
         });
@@ -188,7 +231,7 @@ const example: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
         additionalProperties: false,
       },
     },
-    handler: async (request:any, reply) => {
+    async handler(request: any, reply: any) {
       try {
         const { password, confirmPassword, token, id } = request.body;
         const user = await User.findOne({
@@ -198,11 +241,13 @@ const example: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
         }).exec();
 
         if (!user) {
-          return reply.code(400).send({ message: "Invalid or expired token" });
+          return await reply
+            .code(400)
+            .send({ message: "Invalid or expired token" });
         }
 
         if (password !== confirmPassword) {
-          return reply.code(400).send({
+          return await reply.code(400).send({
             message: "Password and confirm password do not match",
           });
         }
@@ -212,7 +257,6 @@ const example: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
         user.resetPasswordExpires = new Date(Date.now());
         await user.save();
 
-        // Assuming sendEmail is defined elsewhere
         await sendEmail(
           user.email,
           "Password reset",
@@ -220,9 +264,62 @@ const example: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
           "./template/requestPassword.handlebars",
         );
 
-        return reply.code(200).send({ message: "Password reset successful" });
-      } catch (error:any) {
+        return await reply
+          .code(200)
+          .send({ message: "Password reset successful" });
+      } catch (error: any) {
         reply.internalServerError(error);
+      }
+    },
+  });
+
+  fastify.put("/update", {
+    // PreValidation: [fastify.authenticate],
+    schema: updateUserSchema,
+    async handler(request: any, reply: any) {
+      try {
+        const { firstname, lastname, username, password, oldEmail, newEmail } =
+          request.body as IUser & { oldEmail: string; newEmail?: string };
+        const user = await User.findOne({ email: oldEmail }).exec();
+        if (!user) {
+          return await reply.code(404).send({ message: "User not found" });
+        }
+
+        const passwordMatch = await bcrypt.compare(password, user.password);
+        if (!passwordMatch) {
+          return await reply.code(401).send({ message: "Invalid password" });
+        }
+
+        const updateData: {
+          firstname?: string;
+          lastname?: string;
+          username?: string;
+          email?: string;
+        } = {
+          firstname,
+          lastname,
+          username,
+        };
+
+        if (newEmail && user.email === oldEmail && oldEmail !== newEmail) {
+          const emailExists = await User.findOne({ email: newEmail }).exec();
+          if (emailExists) {
+            return await reply
+              .code(409)
+              .send({ message: "New email is already in use" });
+          }
+
+          updateData.email = newEmail;
+        }
+
+        await User.findOneAndUpdate({ email: oldEmail }, updateData, {
+          new: true,
+        }).exec();
+
+        reply.code(200).send({ message: "Profile updated successfully" });
+      } catch (error) {
+        console.error(error);
+        reply.code(500).send({ message: "Internal server error" });
       }
     },
   });

@@ -1,20 +1,36 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, type Document } from "mongoose";
 
-export interface IQuiz extends Document {
-  title: string;
+type IQuestion = {
+  question: string;
+  answers: string[];
+  correct_answer: number;
+  points: number;
+}
+
+type IQuiz = {
+  name: string;
   description: string;
-  questions: String[];
+  status: string;
+  questions: IQuestion[];
   createdBy: Schema.Types.ObjectId;
   classId: Schema.Types.ObjectId;
   dueDate: Date;
-  timeLimit?: number; // Optional time limit in minutes
-}
+  timeLimit?: number;
+} & Document
+
+const QuestionSchema: Schema = new Schema({
+  question: { type: String, required: true },
+  answers: [{ type: String, required: true }],
+  correct_answer: { type: Number, required: true, min: 0, max: 3 },
+  points: { type: Number, required: true },
+});
 
 const QuizSchema: Schema = new Schema(
   {
-    title: { type: String, required: true },
+    name: { type: String, required: true },
     description: String,
-    questions: [{ type: Schema.Types.ObjectId, ref: "Question" }],
+    status: { type: Boolean, required: true, default: false },
+    questions: [QuestionSchema],
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
@@ -24,7 +40,6 @@ const QuizSchema: Schema = new Schema(
     classId: {
       type: Schema.Types.ObjectId,
       ref: "Class",
-      required: true,
       index: true,
     },
     dueDate: Date,

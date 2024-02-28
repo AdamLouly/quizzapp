@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from "fastify";
-import bcrypt from "bcrypt";
 import { User } from "../../models/User";
+import bcrypt from "bcrypt";
 
 const user: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
   fastify.get<{
@@ -11,12 +11,10 @@ const user: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
       : 0;
     const limit = request.query.limit ? parseInt(request.query.limit, 10) : 10;
 
-    // Query to find users where role is not 'admin'
     const users = await User.find({ role: { $ne: "admin" } })
       .skip(offset)
       .limit(limit);
 
-    // Send the response
     reply.send({ users, offset, limit });
   });
 
@@ -43,7 +41,7 @@ const user: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
   }>("/:id", async (request: any, reply) => {
     const user = await request.body;
     const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(request.body.password, salt);
+    user.password = await bcrypt.hash(user.password, salt);
     await User.findByIdAndUpdate(request.params.id, user, { new: true }).exec();
     reply.send({ user });
   });

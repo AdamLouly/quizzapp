@@ -15,8 +15,8 @@ import { useState } from "react";
 
 export const CellAction: React.FC<{
   data: any;
-  handleStudentDelete: (userId: any) => void;
-}> = ({ data, handleStudentDelete }) => {
+  handleTeaherDelete: (userId: any) => void;
+}> = ({ data, handleTeaherDelete }) => {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const router = useRouter();
@@ -27,11 +27,9 @@ export const CellAction: React.FC<{
       await axios.delete(
         `${process.env.NEXT_PUBLIC_API_URL}/users/${data._id}`,
       );
-      // Call handleUserDelete after successful deletion
-      handleStudentDelete(data._id);
+      handleTeaherDelete(data._id);
       setLoading(false);
       setOpen(false);
-      // Optionally, navigate or trigger a re-fetch of data here
     } catch (error) {
       console.error("Failed to delete user", error);
       setLoading(false);

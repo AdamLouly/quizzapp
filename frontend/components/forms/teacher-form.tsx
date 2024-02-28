@@ -15,7 +15,14 @@ import {
 } from "../ui/form";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { MultiSelect } from "../ui/multiselect";
 
 const formSchema = z.object({
   firstname: z.string().min(1, { message: "First name is required" }),
@@ -25,7 +32,7 @@ const formSchema = z.object({
   password: z
     .string()
     .min(6, { message: "Password must be at least 6 characters" }),
-  status: z.enum(["active", "inactive"]).default("inactive"),
+  /* status: z.enum(["active", "inactive"]).default("active"), */
   profilePicture: z.string().optional(),
 });
 
@@ -47,7 +54,7 @@ export const UserForm: React.FC<{
       username: "",
       email: "",
       password: "",
-      status: "inactive",
+      /* status: "active", */
       profilePicture: "",
       role: "teacher",
       ...initialData,
@@ -60,7 +67,7 @@ export const UserForm: React.FC<{
     }
   }, [initialData, form]);
 
-  const onSubmit = async (data: UserFormValue) => {
+  const onSubmit = async (data: any) => {
     setLoading(true);
 
     const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/users`;
@@ -75,7 +82,7 @@ export const UserForm: React.FC<{
         data: data,
       });
       toast({
-        variant: "default",
+        variant: "success",
         title: `User ${initialData ? "updated" : "created"} successfully.`,
       });
       router.push("/dashboard/teachers");
@@ -94,8 +101,7 @@ export const UserForm: React.FC<{
   return (
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* firstname */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4 mb-4">
           <FormField
             control={form.control}
             name="firstname"
@@ -132,7 +138,6 @@ export const UserForm: React.FC<{
               </FormItem>
             )}
           />
-          {/* Ensure Username and Email are on the same row on larger screens */}
           <FormField
             control={form.control}
             name="username"
@@ -187,8 +192,7 @@ export const UserForm: React.FC<{
               </FormItem>
             )}
           />
-          {/* Status */}
-          <FormField
+          {/* <FormField
             control={form.control}
             name="status"
             render={({ field }) => {
@@ -217,7 +221,7 @@ export const UserForm: React.FC<{
                 </FormItem>
               );
             }}
-          />
+          /> */}
         </div>
 
         <Button disabled={loading} type="submit">

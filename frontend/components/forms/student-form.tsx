@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { MultiSelect } from "../ui/multiselect";
 
 const formSchema = z.object({
   firstname: z.string().min(1, { message: "First name is required" }),
@@ -32,7 +33,7 @@ const formSchema = z.object({
     .string()
     .min(6, { message: "Password must be at least 6 characters" }),
   role: z.enum(["student"]),
-  status: z.enum(["active", "inactive"]).default("inactive"),
+  /* status: z.enum(["active", "inactive"]).default("active"), */
   profilePicture: z.string().optional(),
 });
 
@@ -55,7 +56,7 @@ export const UserForm: React.FC<{
       email: "",
       password: "",
       role: "student",
-      status: "inactive",
+      /* status: "active", */
       profilePicture: "",
       ...initialData,
     },
@@ -63,7 +64,10 @@ export const UserForm: React.FC<{
 
   useEffect(() => {
     if (initialData) {
-      form.reset(initialData);
+      const formValues = {
+        ...initialData,
+      };
+      form.reset(formValues);
     }
   }, [initialData, form]);
 
@@ -82,7 +86,7 @@ export const UserForm: React.FC<{
         data: data,
       });
       toast({
-        variant: "default",
+        variant: "success",
         title: `User ${initialData ? "updated" : "created"} successfully.`,
       });
       router.push("/dashboard/students");
@@ -101,7 +105,7 @@ export const UserForm: React.FC<{
   return (
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4 mb-4">
           {/* firstname */}
           <FormField
             control={form.control}
@@ -195,7 +199,7 @@ export const UserForm: React.FC<{
             )}
           />
           {/* Status */}
-          <FormField
+          {/* <FormField
             control={form.control}
             name="status"
             render={({ field }) => (
@@ -205,8 +209,8 @@ export const UserForm: React.FC<{
                   <Select
                     value={field.value}
                     onValueChange={(value) => {
-                      form.setValue("status", value); // Explicitly set the value
-                      field.onChange(value); // Ensure the form knows about the change
+                      form.setValue("status", value);
+                      field.onChange(value);
                     }}
                   >
                     <SelectTrigger aria-label="Status">
@@ -224,7 +228,7 @@ export const UserForm: React.FC<{
                 <FormMessage />
               </FormItem>
             )}
-          />
+          /> */}
         </div>
 
         <Button disabled={loading} type="submit">

@@ -4,7 +4,7 @@ import * as dotenv from "dotenv";
 // Require the framework
 import Fastify from "fastify";
 
-/* import { initGraphql } from "./graphql"; */
+/* Import { initGraphql } from "./graphql"; */
 import { initSwagger } from "./swagger";
 
 import app from "./app";

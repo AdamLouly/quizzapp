@@ -26,10 +26,10 @@ import { MultiSelect } from "../ui/multiselect";
 
 const formSchema = z.object({
   name: z.string().min(1, { message: "Class name is required" }),
-  teacher: z.string().optional(),
+  teacher: z.string(),
   students: z.array(z.string()).optional(),
+  client: z.string(),
   quizzes: z.array(z.string()).optional(),
-  client: z.string().optional(),
 });
 
 type ClassFormValues = z.infer<typeof formSchema>;
@@ -43,7 +43,6 @@ export const ClassForm: React.FC<{
   const router = useRouter();
   const [teachers, setTeachers] = useState([]);
   const [students, setStudents] = useState([]);
-  const [quizzes, setQuizzes] = useState([]);
   const [clients, setClients] = useState([]);
 
   const form = useForm<ClassFormValues>({
@@ -54,7 +53,6 @@ export const ClassForm: React.FC<{
       client: initialData?.client || "-1",
       teacher: initialData?.teacher || "-1",
       students: initialData?.students || [],
-      quizzes: initialData?.quizzes || [],
     },
   });
 
@@ -62,9 +60,9 @@ export const ClassForm: React.FC<{
     if (initialData) {
       const formValues = {
         ...initialData,
-        teacher: initialData.teacher?._id || "-1",
-        students: initialData.students.map((student) => student._id) || [],
-        quizzes: initialData.quizzes.map((quiz) => quiz._id) || [],
+        teacher: initialData?.teacher?._id || "-1",
+        students:
+          initialData?.students?.map((student: any) => student._id) || [],
         client: initialData.client || "-1",
       };
       form.reset(formValues);
@@ -74,16 +72,14 @@ export const ClassForm: React.FC<{
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [teachersRes, studentsRes, quizzesRes, clientsRes] =
+        const [teachersRes, studentsRes, clientsRes] =
           await Promise.all([
             axios.get(`${process.env.NEXT_PUBLIC_API_URL}/teachers`),
             axios.get(`${process.env.NEXT_PUBLIC_API_URL}/students`),
-            axios.get(`${process.env.NEXT_PUBLIC_API_URL}/quizzes`),
             axios.get(`${process.env.NEXT_PUBLIC_API_URL}/clients`),
           ]);
         setTeachers(teachersRes.data.teachers);
         setStudents(studentsRes.data.students);
-        setQuizzes(quizzesRes.data.quizzes);
         setClients(clientsRes.data.clients);
       } catch (error) {
         console.error("Failed to fetch initial data:", error);
@@ -99,15 +95,15 @@ export const ClassForm: React.FC<{
       const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/classes/${
         classId ? `${classId}` : ""
       }`;
-      data.client = data.client === "-1" ? null : data.client;
-      data.teacher = data.teacher === "-1" ? null : data.teacher;
+      data.client = data.client == "-1" ? null : data.client;
+      data.teacher = data.teacher == "-1" ? null : data.teacher;
       await axios({
         method: classId ? "put" : "post",
         url: apiUrl,
         data,
       });
       toast({
-        variant: "default",
+        variant: "success",
         title: `Class ${classId ? "updated" : "created"} successfully.`,
       });
       router.push("/dashboard/classes");
@@ -126,73 +122,39 @@ export const ClassForm: React.FC<{
   return (
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="Class Name" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="client"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Client</FormLabel>
-              <FormControl>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a client" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="-1">
-                      <em>None</em>
-                    </SelectItem>
-                    {clients.map((client: any) => (
-                      <SelectItem key={client._id} value={client._id}>
-                        {client.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="teacher"
-          render={({ field }) => {
-            return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4 mb-4">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
               <FormItem>
-                <FormLabel>Teacher</FormLabel>
+                <FormLabel>Name</FormLabel>
                 <FormControl>
-                  <Select
-                    onValueChange={(value) => field.onChange(value)}
-                    value={field.value ? field.value.toString() : "-1"}
-                  >
+                  <Input {...field} placeholder="Class Name" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="client"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Client</FormLabel>
+                <FormControl>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a teacher" />
+                      <SelectValue placeholder="Select a client" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="-1">
                         <em>None</em>
                       </SelectItem>
-                      {teachers.map((teacher) => (
-                        <SelectItem
-                          key={teacher._id}
-                          value={teacher._id.toString()}
-                        >
-                          {teacher.username}
+                      {clients.map((client: any) => (
+                        <SelectItem key={client._id} value={client._id}>
+                          {client.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -200,84 +162,84 @@ export const ClassForm: React.FC<{
                 </FormControl>
                 <FormMessage />
               </FormItem>
-            );
-          }}
-        />
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="students"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Students</FormLabel>
-              <FormControl>
-                <MultiSelect
-                  selected={field.value.map((id) => {
-                    // Find the student object and return as { label, value }
-                    const studentObj = students.find(
-                      (student) => student._id === id,
-                    );
-                    return {
-                      label: studentObj
-                        ? studentObj.username
-                        : "Student not found",
-                      value: id,
-                    };
-                  })}
-                  options={students.map((student) => ({
-                    label: student.username,
-                    value: student._id,
-                  }))}
-                  onChange={(selectedOptions) => {
-                    // Pass only the ids to the onChange handler
-                    const selectedIds = selectedOptions.map(
-                      (option) => option.value,
-                    );
-                    field.onChange(selectedIds);
-                  }}
-                  className="sm:w-[510px]"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="teacher"
+            render={({ field }) => {
+              return (
+                <FormItem>
+                  <FormLabel>Teacher</FormLabel>
+                  <FormControl>
+                    <Select
+                      onValueChange={(value) => field.onChange(value)}
+                      value={field.value ? field.value.toString() : "-1"}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a teacher" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="-1">
+                          <em>None</em>
+                        </SelectItem>
+                        {teachers.map((teacher: any) => (
+                          <SelectItem
+                            key={teacher._id}
+                            value={teacher._id.toString()}
+                          >
+                            {teacher.username}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
+          />
 
-        <FormField
-          control={form.control}
-          name="quizzes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Quizzes</FormLabel>
-              <FormControl>
-                <MultiSelect
-                  selected={field.value.map((id) => {
-                    console.log("Mapping IDs:", id);
-                    const quiz = quizzes.find((quiz) => quiz._id === id);
-                    console.log("Found Match:", quiz);
-                    console.log(id, quiz); // Debugging
-                    return {
-                      value: id,
-                      label: quiz?.title || "Quiz not found",
-                    };
-                  })}
-                  options={quizzes.map((quiz: any) => ({
-                    label: quiz.title,
-                    value: quiz._id,
-                  }))}
-                  onChange={(selectedOptions) => {
-                    field.onChange(
-                      selectedOptions.map((option) => option.value),
-                    );
-                  }}
-                  className="sm:w-[510px]"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
+          <FormField
+            control={form.control}
+            name="students"
+            render={({ field }: { field: any }) => (
+              <FormItem>
+                <FormLabel>Students</FormLabel>
+                <FormControl>
+                  <MultiSelect
+                    selected={field.value.map((id: any) => {
+                      // Find the student object and return as { label, value }
+                      const studentObj: any = students.find(
+                        (student: any) => student._id === id,
+                      );
+                      return {
+                        label: studentObj
+                          ? studentObj.username
+                          : "Student not found",
+                        value: id,
+                      };
+                    })}
+                    options={students.map((student: any) => ({
+                      label: student.username,
+                      value: student._id,
+                    }))}
+                    onChange={(selectedOptions) => {
+                      // Pass only the ids to the onChange handler
+                      const selectedIds = selectedOptions.map(
+                        (option) => option.value,
+                      );
+                      field.onChange(selectedIds);
+                    }}
+                    /* className="sm:w-[510px]" */
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
         <Button disabled={loading} type="submit">
           {initialData ? "Update Class" : "Create Class"}
         </Button>

@@ -43,7 +43,6 @@ const ResetPasswordPage: React.FC = () => {
 
   const onSubmit = async (data: FormData) => {
     const { password, confirmPassword } = data;
-    console.log(data);
     try {
       await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/auth/reset-password`,
@@ -56,7 +55,7 @@ const ResetPasswordPage: React.FC = () => {
       );
 
       toast({
-        variant: "default",
+        variant: "success",
         title: "Password reset successfully",
       });
       router.push("/");

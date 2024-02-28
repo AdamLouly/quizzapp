@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  ColumnDef,
   PaginationState,
   SortingState,
   flexRender,
@@ -21,7 +20,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "./input";
-import { Button } from "./button";
 import { ScrollArea, ScrollBar } from "./scroll-area";
 
 interface DataTableProps<TData, TValue> {
@@ -40,9 +38,6 @@ export function DataTable<TData, TValue>({
   columns,
   data,
   searchKey,
-  currentPage,
-  totalPages,
-  onPageChange,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [pagination, setPagination] = useState<PaginationState>({

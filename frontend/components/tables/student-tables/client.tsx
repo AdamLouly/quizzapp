@@ -9,7 +9,8 @@ import { Separator } from "@/components/ui/separator";
 import { Plus } from "lucide-react";
 import axios from "axios";
 import { getColumns } from "./columns";
-import axiosInstance from "@/lib/custom-axios";
+import { Skeleton } from "@nextui-org/react";
+import { useToast } from "@/components/ui/use-toast";
 
 export const UserClient: React.FC = () => {
   const [students, setstudents] = useState([]);
@@ -17,13 +18,36 @@ export const UserClient: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalstudents, setTotalstudents] = useState(0);
+  const [classes, setClasses]: any = useState([]);
   const router = useRouter();
+  const { toast } = useToast();
 
   const totalPages = Math.ceil(totalstudents / pageSize);
 
   const handlePageChange = (newPage: any) => {
     setCurrentPage(newPage);
   };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const classesResponse = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/classes`,
+      );
+
+      const classesData = classesResponse.data.classes.reduce(
+        (acc: any, clas: any) => {
+          acc[clas._id] = clas.name;
+          return acc;
+        },
+        {},
+      );
+
+      setClasses(classesData);
+      setLoading(false);
+    };
+
+    fetchData();
+  }, [currentPage, pageSize]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -47,11 +71,15 @@ export const UserClient: React.FC = () => {
     fetchData();
   }, [currentPage, pageSize]);
 
-  const handleTeacherDelete = (studentId: any) => {
+  const handleStudentDelete = (studentId: any) => {
     setstudents(students.filter((student: any) => student._id !== studentId));
+    toast({
+      variant: "success",
+      title: "Student Deleted.",
+    });
   };
 
-  const columns = getColumns(handleTeacherDelete);
+  const columns = getColumns(handleStudentDelete);
 
   return (
     <>
@@ -68,9 +96,7 @@ export const UserClient: React.FC = () => {
         </Button>
       </div>
       <Separator />
-      {loading ? (
-        <div>Loading...</div>
-      ) : (
+      <Skeleton isLoaded={!loading}>
         <DataTable
           searchKey="username"
           columns={columns}
@@ -79,7 +105,7 @@ export const UserClient: React.FC = () => {
           totalPages={totalPages}
           onPageChange={handlePageChange}
         />
-      )}
+      </Skeleton>
     </>
   );
 };

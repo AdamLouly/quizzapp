@@ -1,6 +1,6 @@
-// src/routes/results/index.ts
+// Src/routes/results/index.ts
 
-import { FastifyPluginAsync } from "fastify";
+import { type FastifyPluginAsync } from "fastify";
 
 const resultsRoutes: FastifyPluginAsync = async (fastify, opts) => {
   fastify.get(
@@ -19,7 +19,7 @@ const resultsRoutes: FastifyPluginAsync = async (fastify, opts) => {
         });
 
         if (!results) {
-          return reply.code(404).send({ message: "Results not found" });
+          return await reply.code(404).send({ message: "Results not found" });
         }
 
         reply.send({ status: "success", data: results });

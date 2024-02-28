@@ -1,4 +1,4 @@
-import axios, {AxiosStatic} from 'axios';
+/* import axios, {AxiosStatic} from 'axios';
 import {useSession} from "next-auth/react";
 
 // Function to retrieve the JWT from storage; implementation depends on where you store the token
@@ -23,3 +23,4 @@ const axiosInstance = axios.create({
 export default axiosInstance;
 
 
+ */

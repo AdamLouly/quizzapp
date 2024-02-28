@@ -5,14 +5,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/components/ui/use-toast";
 import axios from "axios";
 import { useParams } from "next/navigation";
-import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 
 export default function Page() {
   const params = useParams();
   const userId = params.userId;
   const breadcrumbItems = [
-    { title: "User", link: "/dashboard/students" },
+    { title: "Student", link: "/dashboard/students" },
     { title: "Update", link: `/dashboard/students/update/${userId}` },
   ];
   const [userData, setUserData] = useState({
@@ -36,7 +35,6 @@ export default function Page() {
           );
           setUserData(response.data.user);
         } catch (error) {
-          console.error("Failed to fetch user data:", error);
           toast({
             variant: "destructive",
             title: "Failed to fetch user data",

@@ -4,7 +4,7 @@ import { ClientForm } from "@/components/forms/client-form"; // Ensure this is c
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/components/ui/use-toast";
 import axios from "axios";
-import { useParams, useRouter } from "next/navigation"; // Use next/router instead of next/navigation for useRouter
+import { useParams } from "next/navigation"; // Use next/router instead of next/navigation for useRouter
 import React, { useEffect, useState } from "react";
 
 export default function ClientUpdatePage() {
@@ -31,7 +31,6 @@ export default function ClientUpdatePage() {
           );
           setClientData(response.data.client); // Adjust the path according to your API response structure
         } catch (error) {
-          console.error("Failed to fetch client data:", error);
           toast({
             variant: "destructive",
             title: "Failed to fetch client data",

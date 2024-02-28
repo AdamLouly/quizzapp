@@ -17,7 +17,7 @@ interface User {
 }
 
 export const getColumns = (
-  handleTeacherDelete: (userId: any) => void,
+  handleStudentDelete: (userId: any) => void,
 ): ColumnDef<User>[] => [
   {
     id: "select",
@@ -39,28 +39,28 @@ export const getColumns = (
     enableHiding: false,
   },
   {
-    accessorKey: "firstname", // Adjusted to match the User schema
+    accessorKey: "firstname",
     header: ({ column }) => {
       return (
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          FirstName
+          First Name
           <CaretSortIcon className="ml-2 h-4 w-4" />
         </Button>
       );
     },
   },
   {
-    accessorKey: "lastname", // Adjusted to match the User schema
+    accessorKey: "lastname",
     header: ({ column }) => {
       return (
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          LastName
+          Last Name
           <CaretSortIcon className="ml-2 h-4 w-4" />
         </Button>
       );
@@ -74,7 +74,7 @@ export const getColumns = (
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          UserName
+          User Name
           <CaretSortIcon className="ml-2 h-4 w-4" />
         </Button>
       );
@@ -95,38 +95,10 @@ export const getColumns = (
     },
   },
   {
-    accessorKey: "role",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Role
-          <CaretSortIcon className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-  },
-  {
-    accessorKey: "status",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Status
-          <CaretSortIcon className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-  },
-  {
     id: "actions",
     cell: ({ row }) => (
       <CellAction
-        handleTeacherDelete={handleTeacherDelete}
+        handleStudentDelete={handleStudentDelete}
         data={row.original}
       />
     ),

@@ -5,13 +5,13 @@ const client: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
   fastify.get<{
     Querystring: { offset?: string; limit?: string };
   }>("/", async (request, reply) => {
-    const offset = request.query.offset ? parseInt(request.query.offset, 10) : 0;
+    const offset = request.query.offset
+      ? parseInt(request.query.offset, 10)
+      : 0;
     const limit = request.query.limit ? parseInt(request.query.limit, 10) : 10;
 
     // Find all clients
-    const clients = await Client.find()
-        .skip(offset)
-        .limit(limit);
+    const clients = await Client.find().skip(offset).limit(limit);
 
     // Send the response with clients
     reply.send({ clients, offset, limit });
@@ -42,7 +42,11 @@ const client: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
   }>("/:id", async (request: any, reply) => {
     // Updating a client's information
     const update = request.body;
-    const updatedClient = await Client.findByIdAndUpdate(request.params.id, update, { new: true }).exec();
+    const updatedClient = await Client.findByIdAndUpdate(
+      request.params.id,
+      update,
+      { new: true },
+    ).exec();
     reply.send({ client: updatedClient });
   });
 

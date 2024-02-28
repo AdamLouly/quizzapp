@@ -1,7 +1,7 @@
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, { type Document, Schema } from "mongoose";
 import bcrypt from "bcrypt";
 
-export interface IUser extends Document {
+export type IUser = {
   firstname: string;
   lastname: string;
   username: string;
@@ -9,6 +9,7 @@ export interface IUser extends Document {
   password: string;
   role: "admin" | "teacher" | "student";
   profilePicture?: string;
+  classes: mongoose.Types.ObjectId[];
   status: string;
   emailVerified: boolean;
   verificationToken: string;
@@ -16,7 +17,7 @@ export interface IUser extends Document {
   resetPasswordToken: string;
   resetPasswordExpires: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
-}
+} & Document
 
 const emailValidator = (value: string) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -38,11 +39,12 @@ const UserSchema: Schema = new Schema(
       required: true,
       enum: ["admin", "teacher", "student"],
     },
+    client: { type: Schema.Types.ObjectId, ref: "Client" },
     profilePicture: { type: String, required: false },
     status: {
       type: String,
       required: true,
-      default: "inactive",
+      default: "active",
       enum: ["active", "inactive"],
     },
     emailVerified: { type: Boolean, default: false },
@@ -59,6 +61,7 @@ UserSchema.pre<IUser>("save", async function (next) {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
   }
+
   next();
 });
 

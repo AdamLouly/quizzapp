@@ -1,5 +1,6 @@
-import { Skeleton } from "@/components/ui/skeleton";
+"use client";
+import { CircularProgress } from "@nextui-org/react";
 
 export default function Loading() {
-  return <Skeleton />;
+  return <CircularProgress aria-label="Loading..." />;
 }

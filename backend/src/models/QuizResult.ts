@@ -1,14 +1,14 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, type Document } from "mongoose";
 
-interface IQuizResults extends Document {
+type IQuizResults = {
   quiz: mongoose.Types.ObjectId;
   student: mongoose.Types.ObjectId;
-  answers: {
+  answers: Array<{
     question: mongoose.Types.ObjectId;
     selectedOption: string;
-  }[];
+  }>;
   score: number;
-}
+} & Document
 
 const QuizResultSchema = new Schema(
   {

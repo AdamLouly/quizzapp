@@ -23,8 +23,8 @@ export const UserActivity = () => {
       <ul className="list-disc pl-5">
         {activities.map((activity, index) => (
           <li key={index}>
-            {activity.user} {activity.action} on quiz "{activity.quiz}" - Score:{" "}
-            {activity.score}
+            {activity.user} {activity.action} on quiz &quot;activity.quiz&quot;
+            - Score: {activity.score}
           </li>
         ))}
       </ul>

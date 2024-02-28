@@ -34,7 +34,7 @@ export async function initSwagger(app: FastifyInstance) {
   if (process.env.NODE_ENV !== "production") {
     writeFileSync(
       join(__dirname, "generated", "swagger.json"),
-      JSON.stringify(swaggerSpec, null, 2)
+      JSON.stringify(swaggerSpec, null, 2),
     );
   }
 

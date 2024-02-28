@@ -49,7 +49,7 @@ export function ColumnActions({
           updateCol(id, name);
           toast({
             title: "Name Updated",
-            variant: "default",
+            variant: "success",
             description: `${title} updated to ${name}`,
           });
         }}

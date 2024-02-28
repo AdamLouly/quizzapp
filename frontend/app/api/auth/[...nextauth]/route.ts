@@ -56,12 +56,40 @@ const handler = NextAuth({
   ],
   callbacks: {
     jwt({ token, user }) {
-      if (user) token.role = user.role;
+      if (user) {
+        token.id = user?._id;
+        token.role = user.role;
+        token.username = user.username;
+        token.firstname = user.firstname;
+        token.lastname = user.lastname;
+        token.email = user.email;
+        token.status = user.status;
+        token.emailVerified = user.emailVerified;
+        token.profilePicture = user.profilePicture;
+        token.password = user.password;
+      }
       return token;
     },
     session({ session, token }) {
+      session.user.id = token.id;
       session.user.role = token.role;
+      session.user.username = token.username;
+      session.user.firstname = token.firstname;
+      session.user.lastname = token.lastname;
+      session.user.email = token.email;
+      session.user.status = token.status;
+      session.user.emailVerified = token.emailVerified;
+      session.user.profilePicture = token.profilePicture;
+      session.user.password = token.password;
       return session;
+    },
+    async signIn({ user, account, profile, email, credentials }) {
+      const isAllowedToSignIn = user.status === "active";
+      if (isAllowedToSignIn) {
+        return true;
+      } else {
+        return false;
+      }
     },
   },
 });

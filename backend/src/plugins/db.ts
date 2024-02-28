@@ -1,5 +1,3 @@
-// src/plugins/mongoose.js
-
 import fp from "fastify-plugin";
 import mongoose from "mongoose";
 
@@ -9,7 +7,7 @@ export default fp(async (fastify, opts) => {
       console.log("Mongoose default connection is open");
     });
 
-    mongoose.connection.on("error", (err:any) => {
+    mongoose.connection.on("error", (err: any) => {
       console.log(`Mongoose default connection has occurred \n${err}`);
     });
 
@@ -25,7 +23,7 @@ export default fp(async (fastify, opts) => {
       process.exit(0);
     });
 
-    await mongoose.connect(process.env.MONGO_URI);
+    await mongoose.connect(process.env.MONGO_URI || "");
     fastify.decorate("mongo", mongoose);
   } catch (err) {
     console.error(err);

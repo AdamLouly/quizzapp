@@ -14,10 +14,10 @@ export default fp<FastifyEtagOptions>(
     opts = {
       // Generates weak ETags by default
       weak: false,
-    }
+    },
   ) => {
     await fastify.register(etag, {
       ...opts,
     });
-  }
+  },
 );

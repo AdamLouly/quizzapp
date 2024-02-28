@@ -1,14 +1,11 @@
-// client.tsx
 "use client";
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
-import { Plus } from "lucide-react";
 import axios from "axios";
 import { getColumns } from "./columns";
+import { Skeleton } from "@nextui-org/react";
 
 export const UserClient: React.FC = () => {
   const [clients, setclients] = useState([]);
@@ -16,7 +13,6 @@ export const UserClient: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalclients, setTotalclients] = useState(0);
-  const router = useRouter();
 
   const totalPages = Math.ceil(totalclients / pageSize);
 
@@ -46,11 +42,7 @@ export const UserClient: React.FC = () => {
     fetchData();
   }, [currentPage, pageSize]);
 
-  const handleTeacherDelete = (studentId: any) => {
-    setclients(clients.filter((student: any) => student._id !== studentId));
-  };
-
-  const columns = getColumns(handleTeacherDelete);
+  const columns = getColumns();
 
   return (
     <>
@@ -59,17 +51,9 @@ export const UserClient: React.FC = () => {
           title={`Clients (${clients.length})`}
           description="Manage clients"
         />
-        <Button
-          className="text-xs md:text-sm"
-          onClick={() => router.push(`/dashboard/clients/new`)}
-        >
-          <Plus className="mr-2 h-4 w-4" /> Add New
-        </Button>
       </div>
       <Separator />
-      {loading ? (
-        <div>Loading...</div>
-      ) : (
+      <Skeleton isLoaded={!loading}>
         <DataTable
           searchKey="phone"
           columns={columns}
@@ -78,7 +62,7 @@ export const UserClient: React.FC = () => {
           totalPages={totalPages}
           onPageChange={handlePageChange}
         />
-      )}
+      </Skeleton>
     </>
   );
 };

@@ -23,7 +23,8 @@
     "start": "tsx src/index.ts",
     "start:prod": "HYPERDX_API_KEY='bb2f34d0-55eb-4623-94e8-087962d2cc67' OTEL_SERVICE_NAME='fastify-starter' npx opentelemetry-instrument dist/server.js",
     "test": "cross-env TS_NODE_FILES=true tap test/**/*.test.ts",
-    "typecheck": "tsc -noEmit"
+    "typecheck": "tsc -noEmit",
+    "vercel-build": "echo hello"
   },
   "lint-staged": {
     "*.{js,ts}": "eslint --cache --fix",

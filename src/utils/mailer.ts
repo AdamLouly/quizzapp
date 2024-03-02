@@ -3,7 +3,7 @@ import fs from "fs";
 import nodemailer from "nodemailer";
 import handlebars from "handlebars";
 
-export const sendEmail = async (email, subject, payload, template) => {
+export const sendEmail = async (email:any, subject:any, payload:any, template:any) => {
   try {
     const transporter = nodemailer.createTransport({
       host: process.env.EMAIL_HOST,
@@ -24,7 +24,7 @@ export const sendEmail = async (email, subject, payload, template) => {
     });
 
     // Send email
-    transporter.sendMail(options(), (error, info) => {
+    transporter.sendMail(options(), (error:any, info:any) => {
       if (error) {
         console.log(error);
         return false;

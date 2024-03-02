@@ -1,12 +1,13 @@
 // Src/routes/results/index.ts
 
 import { type FastifyPluginAsync } from "fastify";
+import { QuizResults } from "../../models/QuizResult";
 
 const resultsRoutes: FastifyPluginAsync = async (fastify, opts) => {
   fastify.get(
     "/:quizId/results",
-    { preValidation: [fastify.authenticate] },
-    async (request, reply) => {
+    /* { preValidation: [fastify.authenticate] }, */
+    async (request: any, reply) => {
       try {
         const { quizId } = request.params;
         const userId = request.user.id;

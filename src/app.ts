@@ -12,23 +12,6 @@ const app: FastifyPluginAsync<AppOptions> = async (
   fastify,
   opts,
 ): Promise<void> => {
-  // Place here your custom code!
-  fastify
-    .decorate(
-      "verifyJWTandLevel",
-      (request: any, reply: any, done: any): any => {
-        // Your validation logic
-        done(); // Pass an error if the authentication fails
-      },
-    )
-    .decorate(
-      "verifyUserAndPassword",
-      (request: any, reply: any, done: any): any => {
-        // Your validation logic
-        done(); // Pass an error if the authentication fails
-      },
-    );
-
   // Do not touch the following lines
 
   // This loads all plugins defined in plugins

@@ -1,5 +1,5 @@
 // Require library to exit fastify process, gracefully (if possible)
-import closeWithGrace from "close-with-grace";
+/* import closeWithGrace from "close-with-grace"; */
 import * as dotenv from "dotenv";
 // Require the framework
 import Fastify from "fastify";
@@ -63,5 +63,10 @@ void server.ready((err) => {
     `Server listening on port ${Number(process.env.PORT ?? 3000)}`,
   );
 }); */
+
+export default async (req: any, res: any) => {
+  await server.ready();
+  server.server.emit("request", req, res);
+};
 
 export { server as app };

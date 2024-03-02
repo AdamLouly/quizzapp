@@ -39,11 +39,31 @@ const user: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
     Body: any;
     Reply: any;
   }>("/:id", async (request: any, reply) => {
+    const { id } = request.params;
     const user = await request.body;
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(user.password, salt);
-    await User.findByIdAndUpdate(request.params.id, user, { new: true }).exec();
-    reply.send({ user });
+
+    // Fetch the existing user
+    const existingUser = await User.findById(id).exec();
+    if (!existingUser) {
+      return reply.status(404).send({ message: "User not found" });
+    }
+
+    // Check if the new password is different from the old one
+    if (user.password !== existingUser.password) {
+      // Hash the new password
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(user.password, salt);
+    }
+
+    // Update the user
+    const updatedUser = await User.findByIdAndUpdate(id, user, {
+      new: true,
+    }).exec();
+    if (!updatedUser) {
+      return reply.status(500).send({ message: "Failed to update user" });
+    }
+
+    reply.send({ user: updatedUser });
   });
 
   fastify.delete<{

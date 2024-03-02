@@ -1,5 +1,6 @@
 import { type FastifyPluginAsync } from "fastify";
 import { Class } from "../../models/Class";
+import { Client } from "../../models/Client";
 
 const classRoutes: FastifyPluginAsync = async (fastify, opts) => {
   fastify.get<{
@@ -38,7 +39,7 @@ const classRoutes: FastifyPluginAsync = async (fastify, opts) => {
   fastify.get<{ Params: { id: string } }>("/:id", async (request, reply) => {
     try {
       const classDoc = await Class.findById(request.params.id).populate(
-        "teacher students clients",
+        "teacher students",
       );
       if (!classDoc) {
         return await reply.code(404).send({ message: "Class not found" });
@@ -55,13 +56,20 @@ const classRoutes: FastifyPluginAsync = async (fastify, opts) => {
     "/:id",
     async (request: any, reply) => {
       try {
+        const client = await Client.findOne();
+        if (!client) {
+          return reply.code(404).send({ message: "Client not found" });
+        }
+        const updatedRequestBody = { ...request.body, client: client._id };
+
         const updatedClass = await Class.findByIdAndUpdate(
           request.params.id,
-          request.body,
+          updatedRequestBody,
           { new: true },
         );
+
         if (!updatedClass) {
-          return await reply.code(404).send({ message: "Class not found" });
+          return reply.code(404).send({ message: "Class not found" });
         }
 
         reply.send(updatedClass);

@@ -3,14 +3,9 @@ import { Quiz } from "../../models/Quiz";
 import { User } from "../../models/User";
 
 type QuizCreationBody = {
-  title: string;
-  description: string;
-  questions: Question[]; // Define `Question` based on your quiz structure
-  createdBy: string; // Assuming this is the teacher's ID
-  class: any;
-  due_date: any;
-  duration: any;
-  createdByEmail: any;
+  name: string;
+  questions: Question[];
+  teacherEmail: any;
 };
 
 // Example Question interface (adjust according to your needs)
@@ -60,46 +55,25 @@ const quizRoutes: FastifyPluginAsync = async (fastify, opts) => {
 
   fastify.post<{
     Body: QuizCreationBody;
-  }>("/create", async (request, reply) => {
-    console.log(request.body); // Log to see if classId is coming through
+  }>("/", async (request, reply) => {
+    const { name, questions = [], teacherEmail } = request.body;
 
-    const {
-      title,
-      description,
-      questions = [], // Defaults to an empty array if not provided
-      createdByEmail,
-      class: classId, // Map `class` from the request to `classId`
-      due_date,
-      duration,
-    } = request.body;
-
-    // Find the teacher by email instead of ID
-    const teacher = await User.findOne({ email: createdByEmail }).exec();
+    const teacher = await User.findOne({ email: teacherEmail }).exec();
     if (!teacher) {
       reply.code(404).send({ error: "Teacher not found" });
       return;
     }
 
-    // Convert due_date from string to Date if necessary
-    const dueDate = new Date(due_date);
-
     try {
-      const quizData: any = {
-        name: title, // Assuming your schema expects a `name` field instead of `title`
-        description,
+      const quizData = {
+        name: name,
         questions,
-        createdBy: teacher._id, // Assuming you've resolved the teacher lookup by email
-        due_date: dueDate,
-        duration,
+        createdBy: teacher._id,
       };
 
-      if (classId) {
-        quizData.classId = classId;
-      }
-
       const newQuiz = new Quiz(quizData);
-
       const savedQuiz = await newQuiz.save();
+
       reply.code(201).send({ quiz: savedQuiz });
     } catch (error: any) {
       console.error(error);

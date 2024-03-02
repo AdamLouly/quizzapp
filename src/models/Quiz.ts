@@ -9,7 +9,6 @@ type IQuestion = {
 
 type IQuiz = {
   name: string;
-  description: string;
   status: string;
   questions: IQuestion[];
   createdBy: Schema.Types.ObjectId;
@@ -22,13 +21,11 @@ const QuestionSchema: Schema = new Schema({
   question: { type: String, required: true },
   answers: [{ type: String, required: true }],
   correct_answer: { type: Number, required: true, min: 0, max: 3 },
-  points: { type: Number, required: true },
 });
 
 const QuizSchema: Schema = new Schema(
   {
     name: { type: String, required: true },
-    description: String,
     status: { type: Boolean, required: true, default: false },
     questions: [QuestionSchema],
     createdBy: {

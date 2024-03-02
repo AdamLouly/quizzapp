@@ -28,7 +28,7 @@ void server.register(app);
 void initSwagger(server);
 
 // Delay is the number of milliseconds for the graceful close to finish
-const closeListeners = closeWithGrace({ delay: 500 }, async (opts: any) => {
+/* const closeListeners = closeWithGrace({ delay: 500 }, async (opts: any) => {
   if (opts.err) {
     server.log.error(opts.err);
   }
@@ -62,6 +62,6 @@ void server.ready((err) => {
   server.log.info(
     `Server listening on port ${Number(process.env.PORT ?? 3000)}`,
   );
-});
+}); */
 
 export { server as app };

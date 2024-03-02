@@ -13,7 +13,7 @@ const app: FastifyPluginAsync<AppOptions> = async (
   opts,
 ): Promise<void> => {
   // Place here your custom code!
-  fastify
+  /* fastify
     .decorate(
       "verifyJWTandLevel",
       (request: any, reply: any, done: any): any => {
@@ -27,7 +27,7 @@ const app: FastifyPluginAsync<AppOptions> = async (
         // Your validation logic
         done(); // Pass an error if the authentication fails
       },
-    );
+    ); */
 
   // Do not touch the following lines
 

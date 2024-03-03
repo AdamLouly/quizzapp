@@ -4,7 +4,6 @@ type IQuestion = {
   question: string;
   answers: string[];
   correct_answer: number;
-  points: number;
 };
 
 type IQuiz = {
@@ -27,7 +26,7 @@ const QuizSchema: Schema = new Schema(
   {
     name: { type: String, required: true },
     status: { type: Boolean, required: true, default: false },
-    questions: [QuestionSchema],
+    questions: { type: [QuestionSchema], default: [] },
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: "User",

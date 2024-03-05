@@ -106,9 +106,9 @@ const quizRoutes: FastifyPluginAsync = async (fastify, opts) => {
         .send({ error: "Failed to create quiz", details: error.message });
     }
   }); */
-  fastify.post<{
-    Body: QuizCreationBody;
-  }>("/", async (request, reply) => {
+  const axios = require("axios");
+
+  fastify.post<{ Body: QuizCreationBody }>("/", async (request, reply) => {
     const { name, teacherEmail } = request.body;
 
     const teacher = await User.findOne({ email: teacherEmail }).exec();
@@ -118,19 +118,27 @@ const quizRoutes: FastifyPluginAsync = async (fastify, opts) => {
     }
 
     try {
-      const sampleQuestions = [
+      const externalApiResponse = await axios.post(
+        process.env.QUIZ_GENERATION_API_URL + "/generate_mcq",
         {
-          question:
-            "What is the main inspiration behind the design of neural networks?",
-          answers: [
-            "Digital networks",
-            "Quantum networks",
-            "Biological neural networks",
-            "Social networks",
-          ],
-          correct_answer: 2,
+          text: name,
         },
-      ];
+        {
+          headers: {
+            "X-Secret-Key": process.env.QUIZ_GENERATION_API_SECRET_KEY,
+          },
+        },
+      );
+
+      const quizDataFromExternalAPI = externalApiResponse.data.mcq;
+      const questionsFromExternalAPI = quizDataFromExternalAPI.questions;
+
+      // Convert the format of questions to match your database structure
+      const sampleQuestions = questionsFromExternalAPI.map((question: any) => ({
+        question: question.question,
+        answers: question.options,
+        correct_answer: question.options.indexOf(question.answer),
+      }));
 
       const quizData = {
         name: name,

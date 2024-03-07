@@ -116,14 +116,6 @@ const example: FastifyPluginAsync = async (
     },
   });
 
-  fastify.decorate("authenticate", async (request: any, reply: any) => {
-    try {
-      await request.jwtVerify();
-    } catch (err) {
-      reply.code(401).send({ message: "Authentication failed" });
-    }
-  });
-
   fastify.post("/login", {
     schema: loginSchema,
     async handler(request: any, reply: any) {
@@ -147,7 +139,7 @@ const example: FastifyPluginAsync = async (
         }
 
         const token = fastify.jwt.sign({
-          id: user.id,
+          _id: user._id,
           username: user.username,
           firstname: user.firstname,
           lastname: user.lastname,
@@ -161,7 +153,7 @@ const example: FastifyPluginAsync = async (
         reply.send({
           token,
           user: {
-            id: user.id,
+            _id: user._id,
             username: user.username,
             firstname: user.firstname,
             lastname: user.lastname,

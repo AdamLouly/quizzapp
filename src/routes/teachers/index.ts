@@ -17,8 +17,8 @@ const teacherRoutes: FastifyPluginAsync = async (fastify, opts) => {
       .skip(offset)
       .limit(limit);
 
-    // Send the response
-    reply.send({ teachers, offset, limit });
+    const totalCount = await User.countDocuments({ role: "teacher" });
+    reply.send({ teachers, totalCount, offset, limit });
   });
 };
 

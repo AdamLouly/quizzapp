@@ -23,8 +23,8 @@ const studentRoutes: FastifyPluginAsync = async (fastify, opts) => {
     const students = await User.find({ role: "student" })
       .skip(offset)
       .limit(limit);
-
-    reply.send({ students, offset, limit });
+    const totalCount = await User.countDocuments({ role: "student" });
+    reply.send({ students, offset, limit, totalCount });
   });
 };
 

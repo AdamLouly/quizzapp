@@ -13,7 +13,7 @@ const app: FastifyPluginAsync<AppOptions> = async (
   opts,
 ): Promise<void> => {
   // Do not touch the following lines
-
+  
   // This loads all plugins defined in plugins
   // those should be support plugins that are reused
   // through your application

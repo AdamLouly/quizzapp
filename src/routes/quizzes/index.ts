@@ -1,6 +1,5 @@
 import { type FastifyPluginAsync } from "fastify";
 import { Quiz } from "../../models/Quiz";
-import { User } from "../../models/User";
 import axios from "axios";
 
 type QuizCreationBody = {
@@ -8,155 +7,89 @@ type QuizCreationBody = {
   teacherEmail: any;
 };
 
-// Example Question interface (adjust according to your needs)
-type Question = {
-  question: string;
-  answers: string[];
-  correct_answer: string;
-};
-
 const quizRoutes: FastifyPluginAsync = async (fastify, opts) => {
   fastify.get<{
     Querystring: { offset?: string; limit?: string };
-  }>("/", async (request, reply) => {
-    const offset = request.query.offset
-      ? parseInt(request.query.offset, 10)
-      : 0;
-    const limit = request.query.limit ? parseInt(request.query.limit, 10) : 10;
-    const quizzes = await Quiz.find().skip(offset).limit(limit);
-    const totalCount = await Quiz.countDocuments();
+  }>(
+    "/",
+    {
+      onRequest: [fastify.authenticate],
+    },
+    async (request, reply) => {
+      const offset = request.query.offset
+        ? parseInt(request.query.offset, 10)
+        : 0;
+      const limit = request.query.limit
+        ? parseInt(request.query.limit, 10)
+        : 10;
+      let quizzes;
+      const filter: any = {};
 
-    reply.send({ quizzes, totalCount, offset, limit });
-  });
+      if (request?.user?.role === "teacher") {
+        filter.createdBy = request?.user._id;
+      }
 
-  fastify.get<{
-    Querystring: { offset?: string; limit?: string; email?: string };
-  }>("/teacher", async (request, reply) => {
-    const { offset = "0", limit = "10", email } = request.query;
-    const offsetNum = parseInt(offset, 10);
-    const limitNum = parseInt(limit, 10);
+      quizzes = await Quiz.find(filter)
+        .sort({ createdAt: -1 })
+        .skip(offset)
+        .limit(limit);
+      const totalCount = await Quiz.countDocuments(filter);
+      reply.send({ quizzes, totalCount, offset, limit });
+    },
+  );
 
-    if (!email) {
-      reply.code(400).send({ error: "Email is required" });
-      return;
-    }
+  fastify.post<{ Body: QuizCreationBody }>(
+    "/",
+    {
+      onRequest: [fastify.authenticate],
+    },
+    async (request: any, reply) => {
+      const { name } = request.body;
 
-    const teacher = await User.findOne({ email }).exec();
-    if (!teacher) {
-      reply.code(404).send({ error: "Teacher not found" });
-      return;
-    }
-
-    const filter = { createdBy: teacher._id };
-    const quizzes = await Quiz.find(filter)
-      .sort({ createdAt: -1 })
-      .skip(offsetNum)
-      .limit(limitNum);
-    const totalCount = await Quiz.countDocuments(filter);
-
-    reply.send({ quizzes, totalCount, offset: offsetNum, limit: limitNum });
-  });
-
-  /* fastify.post<{
-    Body: QuizCreationBody;
-  }>("/", async (request, reply) => {
-    const { name, teacherEmail } = request.body;
-
-    const teacher = await User.findOne({ email: teacherEmail }).exec();
-    if (!teacher) {
-      reply.code(404).send({ error: "Teacher not found" });
-      return;
-    }
-
-    try {
-      // Send the lecture content to the quiz generation endpoint
-      const quizQuestionsResponse = await axios.post(
-        "https://api.quizgenerator.com/generate",
-        {
-          content: name,
-        },
-      );
-
-      // Process the API response to include the correct answer index
-      const processedQuestions = quizQuestionsResponse.data.mcq.questions.map(
-        (question: any) => {
-          const correctAnswerIndex = question.options.indexOf(question.answer);
-          return {
-            question: question.question,
-            options: question.options,
-            correctAnswer: correctAnswerIndex, // Set the correct answer as the index
-          };
-        },
-      );
-
-      const quizData = {
-        name: name,
-        createdBy: teacher._id,
-        questions: processedQuestions, // Use the processed questions with correctAnswer as index
-      };
-
-      const newQuiz = new Quiz(quizData);
-      const savedQuiz = await newQuiz.save();
-
-      reply.code(201).send({ quiz: savedQuiz });
-    } catch (error: any) {
-      console.error(error);
-      reply
-        .code(500)
-        .send({ error: "Failed to create quiz", details: error.message });
-    }
-  }); */
-  const axios = require("axios");
-
-  fastify.post<{ Body: QuizCreationBody }>("/", async (request, reply) => {
-    const { name, teacherEmail } = request.body;
-
-    const teacher = await User.findOne({ email: teacherEmail }).exec();
-    if (!teacher) {
-      reply.code(404).send({ error: "Teacher not found" });
-      return;
-    }
-
-    try {
-      const externalApiResponse = await axios.post(
-        process.env.QUIZ_GENERATION_API_URL + "/generate_mcq",
-        {
-          text: name,
-        },
-        {
-          headers: {
-            "X-Secret-Key": process.env.QUIZ_GENERATION_API_SECRET_KEY,
+      try {
+        const externalApiResponse = await axios.post(
+          process.env.QUIZ_GENERATION_API_URL + "/generate_mcq",
+          {
+            text: name,
           },
-        },
-      );
+          {
+            headers: {
+              "X-Secret-Key": process.env.QUIZ_GENERATION_API_SECRET_KEY,
+            },
+          },
+        );
 
-      const quizDataFromExternalAPI = externalApiResponse.data.mcq;
-      const questionsFromExternalAPI = quizDataFromExternalAPI.questions;
+        const quizDataFromExternalAPI = externalApiResponse.data.mcq;
+        const questionsFromExternalAPI = quizDataFromExternalAPI.questions;
 
-      // Convert the format of questions to match your database structure
-      const sampleQuestions = questionsFromExternalAPI.map((question: any) => ({
-        question: question.question,
-        answers: question.options,
-        correct_answer: question.options.indexOf(question.answer),
-      }));
+        if (!questionsFromExternalAPI)
+          return reply.code(400).send({ error: "Failed to create quiz" });
+        const sampleQuestions = questionsFromExternalAPI.map(
+          (question: any) => ({
+            question: question.question,
+            answers: question.options,
+            correct_answer: question.options.indexOf(question.answer),
+          }),
+        );
 
-      const quizData = {
-        name: name,
-        createdBy: teacher._id,
-        questions: sampleQuestions,
-      };
+        const quizData = {
+          name: name,
+          createdBy: request?.user?._id,
+          questions: sampleQuestions,
+        };
 
-      const newQuiz = new Quiz(quizData);
-      const savedQuiz = await newQuiz.save();
+        const newQuiz = new Quiz(quizData);
+        const savedQuiz = await newQuiz.save();
 
-      reply.code(201).send({ quiz: savedQuiz });
-    } catch (error: any) {
-      console.error(error);
-      reply
-        .code(500)
-        .send({ error: "Failed to create quiz", details: error.message });
-    }
-  });
+        reply.code(201).send({ quiz: savedQuiz });
+      } catch (error: any) {
+        console.error(error);
+        reply
+          .code(500)
+          .send({ error: "Failed to create quiz", details: error.message });
+      }
+    },
+  );
 
   fastify.get<{
     Body: any;
@@ -176,6 +109,19 @@ const quizRoutes: FastifyPluginAsync = async (fastify, opts) => {
       reply.send({ quiz });
     },
   );
+
+  fastify.delete<{ Params: { id: string } }>("/:id", async (request, reply) => {
+    try {
+      const result = await Quiz.findByIdAndDelete(request.params.id);
+      if (!result) {
+        return await reply.code(404).send({ message: "Quiz not found" });
+      }
+
+      reply.code(204).send();
+    } catch (error) {
+      reply.code(500).send(error);
+    }
+  });
 };
 
 export default quizRoutes;

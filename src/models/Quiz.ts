@@ -8,7 +8,6 @@ type IQuestion = {
 
 type IQuiz = {
   name: string;
-  status: string;
   questions: IQuestion[];
   createdBy: Schema.Types.ObjectId;
   classId: Schema.Types.ObjectId;
@@ -19,13 +18,12 @@ type IQuiz = {
 const QuestionSchema: Schema = new Schema({
   question: { type: String, required: true },
   answers: [{ type: String, required: true }],
-  correct_answer: { type: Number, required: true, min: 0, max: 3 },
+  correct_answer: { type: Number, required: true, min: 0 },
 });
 
 const QuizSchema: Schema = new Schema(
   {
     name: { type: String, required: true },
-    status: { type: Boolean, required: true, default: false },
     questions: { type: [QuestionSchema], default: [] },
     createdBy: {
       type: Schema.Types.ObjectId,
@@ -33,13 +31,6 @@ const QuizSchema: Schema = new Schema(
       required: true,
       index: true,
     },
-    classId: {
-      type: Schema.Types.ObjectId,
-      ref: "Class",
-      index: true,
-    },
-    dueDate: Date,
-    timeLimit: Number,
   },
   { timestamps: true },
 );

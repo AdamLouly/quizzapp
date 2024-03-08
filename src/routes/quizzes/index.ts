@@ -3,8 +3,8 @@ import { Quiz } from "../../models/Quiz";
 import axios from "axios";
 
 type QuizCreationBody = {
-  name: string;
-  teacherEmail: any;
+  title: string;
+  content: any;
 };
 
 const quizRoutes: FastifyPluginAsync = async (fastify, opts) => {
@@ -44,13 +44,13 @@ const quizRoutes: FastifyPluginAsync = async (fastify, opts) => {
       onRequest: [fastify.authenticate],
     },
     async (request: any, reply) => {
-      const { name } = request.body;
+      const { title, content } = request.body;
 
       try {
         const externalApiResponse = await axios.post(
           process.env.QUIZ_GENERATION_API_URL + "/generate_mcq",
           {
-            text: name,
+            text: content,
           },
           {
             headers: {
@@ -73,7 +73,8 @@ const quizRoutes: FastifyPluginAsync = async (fastify, opts) => {
         );
 
         const quizData = {
-          name: name,
+          title,
+          content,
           createdBy: request?.user?._id,
           questions: sampleQuestions,
         };

@@ -7,12 +7,10 @@ type IQuestion = {
 };
 
 type IQuiz = {
-  name: string;
+  title: string;
+  content: string;
   questions: IQuestion[];
   createdBy: Schema.Types.ObjectId;
-  classId: Schema.Types.ObjectId;
-  dueDate: Date;
-  timeLimit?: number;
 } & Document;
 
 const QuestionSchema: Schema = new Schema({
@@ -23,7 +21,8 @@ const QuestionSchema: Schema = new Schema({
 
 const QuizSchema: Schema = new Schema(
   {
-    name: { type: String, required: true },
+    title: { type: String, required: true },
+    content: { type: String, required: true },
     questions: { type: [QuestionSchema], default: [] },
     createdBy: {
       type: Schema.Types.ObjectId,

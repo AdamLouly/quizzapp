@@ -9,7 +9,7 @@ export type IUser = {
   password: string;
   role: "admin" | "teacher" | "student";
   profilePicture?: string;
-  classes: mongoose.Types.ObjectId[];
+  client: { type: Schema.Types.ObjectId; ref: "Client" };
   status: string;
   emailVerified: boolean;
   verificationToken: string;

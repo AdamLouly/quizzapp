@@ -4,7 +4,7 @@ interface IPublishedQuiz extends Document {
   quizId: Schema.Types.ObjectId;
   classId: Schema.Types.ObjectId;
   dueDate: Date;
-  timeLimit?: number;
+  createdBy: Schema.Types.ObjectId;
 }
 
 const PublishedQuizSchema: Schema = new Schema(
@@ -21,8 +21,13 @@ const PublishedQuizSchema: Schema = new Schema(
       required: true,
       index: true,
     },
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
     dueDate: { type: Date, required: true },
-    timeLimit: Number,
   },
   { timestamps: true },
 );

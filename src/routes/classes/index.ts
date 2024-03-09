@@ -38,9 +38,9 @@ const classRoutes: FastifyPluginAsync = async (fastify, opts) => {
   // Get a single class by ID
   fastify.get<{ Params: { id: string } }>("/:id", async (request, reply) => {
     try {
-      const classDoc = await Class.findById(request.params.id).populate(
-        "teacher students",
-      );
+      const classDoc = await Class.findById(request.params.id)
+        .populate("teacher")
+        .populate("students");
       if (!classDoc) {
         return await reply.code(404).send({ message: "Class not found" });
       }

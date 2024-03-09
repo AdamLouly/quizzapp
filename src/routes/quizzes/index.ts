@@ -15,7 +15,7 @@ const quizRoutes: FastifyPluginAsync = async (fastify, opts) => {
     {
       onRequest: [fastify.authenticate],
     },
-    async (request, reply) => {
+    async (request: any, reply) => {
       const offset = request.query.offset
         ? parseInt(request.query.offset, 10)
         : 0;

@@ -8,14 +8,46 @@ type PublishedQuizRequest = {
     properties: {
       quizId: { type: "string" };
       classId: { type: "string" };
+      createdId: { type: "string" };
       dueDate: { type: "string"; format: "date" };
-      timeLimit: { type: "number" };
     };
     additionalProperties: false;
   };
 };
 
 const publishedQuizRoutes: FastifyPluginAsync = async (fastify, opts) => {
+  fastify.get<{
+    Querystring: { offset?: string; limit?: string };
+  }>(
+    "/",
+    {
+      onRequest: [fastify.authenticate],
+    },
+    async (request: any, reply) => {
+      const offset = request.query.offset
+        ? parseInt(request.query.offset, 10)
+        : 0;
+      const limit = request.query.limit
+        ? parseInt(request.query.limit, 10)
+        : 10;
+      let quizzes;
+      const filter: any = {};
+
+      if (request?.user?.role === "teacher") {
+        filter.createdBy = request?.user._id;
+      }
+
+      quizzes = await PublishedQuiz.find(filter)
+        .populate("quizId")
+        .populate("classId")
+        .sort({ createdAt: -1 })
+        .skip(offset)
+        .limit(limit);
+      const totalCount = await PublishedQuiz.countDocuments(filter);
+      reply.send({ quizzes, totalCount, offset, limit });
+    },
+  );
+
   fastify.post<{ Body: PublishedQuizRequest }>(
     "/",
     {
@@ -23,7 +55,9 @@ const publishedQuizRoutes: FastifyPluginAsync = async (fastify, opts) => {
     },
     async (request: any, reply) => {
       try {
-        const newQuiz = new PublishedQuiz(request.body);
+        const createdBy = request?.user?._id;
+
+        const newQuiz = new PublishedQuiz({ ...request.body, createdBy });
         const publishedQuiz = await newQuiz.save();
 
         reply.code(201).send({ quiz: publishedQuiz });
@@ -35,6 +69,38 @@ const publishedQuizRoutes: FastifyPluginAsync = async (fastify, opts) => {
       }
     },
   );
+
+  fastify.get<{
+    Body: any;
+    Reply: any;
+  }>("/:id", async (request: any, reply) => {
+    const quiz = await PublishedQuiz.findById(request.params.id);
+    reply.send({ quiz });
+  });
+
+  fastify.put<{ Body: any; Reply: any }>(
+    "/:id",
+    async (request: any, reply: any) => {
+      const quiz = await PublishedQuiz.findByIdAndUpdate(
+        request.params.id,
+        request.body,
+      );
+      reply.send({ quiz });
+    },
+  );
+
+  fastify.delete<{ Params: { id: string } }>("/:id", async (request, reply) => {
+    try {
+      const result = await PublishedQuiz.findByIdAndDelete(request.params.id);
+      if (!result) {
+        return await reply.code(404).send({ message: "Quiz not found" });
+      }
+
+      reply.code(204).send();
+    } catch (error) {
+      reply.code(500).send(error);
+    }
+  });
 };
 
 export default publishedQuizRoutes;

@@ -1,37 +1,40 @@
-import mongoose, { Schema, type Document } from "mongoose";
+import mongoose, { Schema, Document } from "mongoose";
 
-type IQuizResults = {
-  quiz: mongoose.Types.ObjectId;
-  student: mongoose.Types.ObjectId;
-  answers: Array<{
-    question: mongoose.Types.ObjectId;
-    selectedOption: string;
-  }>;
+interface IQuizResult extends Document {
+  publishedQuizId: Schema.Types.ObjectId;
+  quizId: Schema.Types.ObjectId;
+  studentId: Schema.Types.ObjectId;
+  answers: number[];
   score: number;
-} & Document;
+}
 
-const QuizResultSchema = new Schema(
+const QuizResultSchema: Schema = new Schema(
   {
-    quiz: {
+    publishedQuizId: {
+      type: Schema.Types.ObjectId,
+      ref: "PublishedQuiz",
+      required: true,
+      index: true,
+    },
+    quizId: {
       type: Schema.Types.ObjectId,
       ref: "Quiz",
       required: true,
       index: true,
     },
-    student: {
+    studentId: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
       index: true,
     },
-    answers: [{ questionId: Schema.Types.ObjectId, answer: String }],
-    score: Number,
-    completedAt: Date,
+    answers: [{ type: Number }],
+    score: { type: Number, required: true, min: 0 },
   },
   { timestamps: true },
 );
 
-export const QuizResults = mongoose.model<IQuizResults>(
-  "QuizResults",
+export const QuizResult = mongoose.model<IQuizResult>(
+  "QuizResult",
   QuizResultSchema,
 );

@@ -97,40 +97,57 @@ const quizResultRoutes: FastifyPluginAsync = async (fastify, opts) => {
       try {
         const currentDate = new Date();
 
-        // Fetch published quizzes with due dates less than the current date
+        // Fetch published quizzes
         const publishedQuizzes = await PublishedQuiz.find({
           dueDate: { $lt: currentDate },
-        }).select("_id");
+        }).populate("quizId");
 
-        // Extract IDs of the published quizzes
-        const publishedQuizIds = publishedQuizzes.map((pq: any) => pq._id);
-
-        // Construct the filter to find quiz results based on student and published quiz IDs
+        // Fetch quiz results
         const filter = {
           studentId: request.user._id,
-          publishedQuizId: { $in: publishedQuizIds },
+          publishedQuizId: { $in: publishedQuizzes.map((pq: any) => pq._id) },
         };
+        const quizResults = await QuizResult.find(filter);
 
-        // Fetch quiz results based on the constructed filter
-        const quizResults = await QuizResult.find(filter)
-          .populate("publishedQuizId")
-          .populate("quizId")
-          .populate("studentId")
-          .sort({ createdAt: -1 })
-          .skip(offset)
-          .limit(limit);
+        // Populate quizId field in the quizResults array
+        await QuizResult.populate(quizResults, { path: "quizId" });
 
-        // Count total quiz results
-        const totalCount = await QuizResult.countDocuments(filter);
+        // Filter out expired published quizzes that are already present in quiz results
+        const filteredPublishedQuizzes = publishedQuizzes.filter(
+          (publishedQuiz) => {
+            return !quizResults.some((quizResult:any) => {
+              return quizResult.publishedQuizId.equals(publishedQuiz._id);
+            });
+          },
+        );
 
-        // Send the response
-        reply.send({ quizzes: quizResults, totalCount, offset, limit });
+        const totalQuizResultsCount = await QuizResult.countDocuments(filter);
+        const totalPublishedQuizzesCount = filteredPublishedQuizzes.length;
+
+        reply.send({
+          quizzes: quizResults,
+          publishedQuizzes: filteredPublishedQuizzes,
+          totalQuizResultsCount,
+          totalPublishedQuizzesCount,
+          offset,
+          limit,
+        });
       } catch (error) {
         console.error("Error fetching published quizzes:", error);
         reply.status(500).send({ error: "Internal Server Error" });
       }
     },
   );
+
+  fastify.get<{
+    Body: any;
+    Reply: any;
+  }>("/:id", async (request: any, reply) => {
+    const quiz = await QuizResult.findById(request.params.id).populate(
+      "quizId",
+    );
+    reply.send({ quiz });
+  });
 };
 
 export default quizResultRoutes;

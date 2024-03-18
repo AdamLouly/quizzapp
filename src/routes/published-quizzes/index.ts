@@ -32,36 +32,31 @@ const publishedQuizRoutes: FastifyPluginAsync = async (fastify, opts) => {
       const limit = request.query.limit
         ? parseInt(request.query.limit, 10)
         : 10;
-
-      let quizzes;
-      const filter: any = {};
-
-      if (request?.user?.role === "student") {
-        const user = await User.findById(request.user._id);
-        const classes = await Class.find({ students: user._id });
-        const classIds = classes.map((cls) => cls._id);
-        filter.classId = { $in: classIds };
-      } else if (request?.user?.role === "teacher") {
-        filter.createdBy = request.user._id;
-      }
-
+  
+      const currentDate = new Date();
+  
+      const filter = {
+        dueDate: { $gte: currentDate },
+      };
+  
       try {
-        quizzes = await PublishedQuiz.find(filter)
-          .populate("quizId")
-          .populate("classId")
+        const publishedQuizzes = await PublishedQuiz.find(filter)
           .sort({ createdAt: -1 })
           .skip(offset)
-          .limit(limit);
-
+          .limit(limit)
+          .populate("quizId")
+          .populate("classId");
+  
         const totalCount = await PublishedQuiz.countDocuments(filter);
-
-        reply.send({ quizzes, totalCount, offset, limit });
+  
+        reply.send({ quizzes: publishedQuizzes, totalCount, offset, limit });
       } catch (error) {
         console.error("Error fetching published quizzes:", error);
         reply.status(500).send({ error: "Internal Server Error" });
       }
-    },
+    }
   );
+  
 
   fastify.post<{ Body: PublishedQuizRequest }>(
     "/",

@@ -1,4 +1,4 @@
-import { type FastifyPluginAsync } from "fastify";
+import { FastifyPluginAsync } from "fastify";
 import { Quiz } from "../../models/Quiz";
 import axios from "axios";
 
@@ -8,50 +8,45 @@ type QuizCreationBody = {
 };
 
 const quizRoutes: FastifyPluginAsync = async (fastify, opts) => {
+  const handleError = (reply, statusCode, message) => {
+    console.error(message);
+    reply.status(statusCode).send({ error: message });
+  };
+
   fastify.get<{
     Querystring: { offset?: string; limit?: string };
-  }>(
-    "/",
-    {
-      preValidation: [fastify.authenticate],
-    },
-    async (request: any, reply) => {
-      const offset = request.query.offset
-        ? parseInt(request.query.offset, 10)
-        : 0;
-      const limit = request.query.limit
-        ? parseInt(request.query.limit, 10)
-        : 10;
-      let quizzes;
+  }>("/", { preValidation: [fastify.authenticate] }, async (request, reply) => {
+    try {
+      const { offset = "0", limit = "10" } = request.query;
       const filter: any = {};
+      const { role, _id: userId } = request.user;
 
-      if (request?.user?.role === "teacher") {
-        filter.createdBy = request?.user._id;
+      if (role === "teacher") {
+        filter.createdBy = userId;
       }
 
-      quizzes = await Quiz.find(filter)
+      const quizzes = await Quiz.find(filter)
         .sort({ createdAt: -1 })
-        .skip(offset)
-        .limit(limit);
+        .skip(parseInt(offset))
+        .limit(parseInt(limit))
+        .lean();
       const totalCount = await Quiz.countDocuments(filter);
       reply.send({ quizzes, totalCount, offset, limit });
-    },
-  );
+    } catch (error) {
+      handleError(reply, 500, "Internal Server Error");
+    }
+  });
 
   fastify.post<{ Body: QuizCreationBody }>(
     "/",
-    {
-      preValidation: [fastify.authenticate],
-    },
-    async (request: any, reply) => {
+    { preValidation: [fastify.authenticate] },
+    async (request, reply) => {
       const { title, content } = request.body;
 
       try {
         const externalApiResponse = await axios.post(
-          process.env.QUIZ_GENERATION_API_URL + "/generate_mcq",
-          {
-            text: content,
-          },
+          `${process.env.QUIZ_GENERATION_API_URL}/generate_mcq`,
+          { text: content },
           {
             headers: {
               "X-Secret-Key": process.env.QUIZ_GENERATION_API_SECRET_KEY,
@@ -59,11 +54,13 @@ const quizRoutes: FastifyPluginAsync = async (fastify, opts) => {
           },
         );
 
-        const quizDataFromExternalAPI = externalApiResponse.data.mcq;
-        const questionsFromExternalAPI = quizDataFromExternalAPI.questions;
+        const questionsFromExternalAPI =
+          externalApiResponse?.data?.mcq?.questions;
 
-        if (!questionsFromExternalAPI)
+        if (!questionsFromExternalAPI) {
           return reply.code(400).send({ error: "Failed to create quiz" });
+        }
+
         const sampleQuestions = questionsFromExternalAPI.map(
           (question: any) => ({
             question: question.question,
@@ -72,59 +69,69 @@ const quizRoutes: FastifyPluginAsync = async (fastify, opts) => {
           }),
         );
 
-        const quizData = {
+        const newQuiz = new Quiz({
           title,
           content,
-          createdBy: request?.user?._id,
+          createdBy: request.user?._id,
           questions: sampleQuestions,
-        };
-
-        const newQuiz = new Quiz(quizData);
+        });
         const savedQuiz = await newQuiz.save();
 
         reply.code(201).send({ quiz: savedQuiz });
       } catch (error: any) {
-        console.error(error);
-        reply
-          .code(500)
-          .send({ error: "Failed to create quiz", details: error.message });
+        handleError(reply, 500, `Failed to create quiz: ${error.message}`);
       }
     },
   );
 
-  fastify.get<{
-    Body: any;
-    Reply: any;
-  }>(
+  const findQuizById = async (id) => {
+    return await Quiz.findById(id);
+  };
+
+  fastify.get<{ Params: { id: string } }>(
     "/:id",
-    {
-      preValidation: [fastify.authenticate],
-    },
-    async (request: any, reply) => {
-      const quiz = await Quiz.findById(request.params.id);
-      reply.send({ quiz });
+    { preValidation: [fastify.authenticate] },
+    async (request, reply) => {
+      try {
+        const quiz = await findQuizById(request.params.id);
+        if (!quiz) {
+          return reply.code(404).send({ message: "Quiz not found" });
+        }
+        reply.send({ quiz });
+      } catch (error) {
+        handleError(
+          reply,
+          500,
+          `Error fetching published quiz: ${error.message}`,
+        );
+      }
     },
   );
 
-  fastify.put<{ Body: any; Reply: any }>(
+  fastify.put<{ Params: { id: string }; Body: any }>(
     "/:id",
-    {
-      preValidation: [fastify.authenticate],
-    },
-    async (request: any, reply: any) => {
-      const quiz = await Quiz.findByIdAndUpdate(
-        request.params.id,
-        request.body,
-      );
-      reply.send({ quiz });
+    { preValidation: [fastify.authenticate] },
+    async (request, reply) => {
+      try {
+        const quiz = await Quiz.findByIdAndUpdate(
+          request.params.id,
+          request.body,
+          { new: true },
+        );
+        reply.send({ quiz });
+      } catch (error) {
+        handleError(
+          reply,
+          500,
+          `Error updating published quiz: ${error.message}`,
+        );
+      }
     },
   );
 
   fastify.delete<{ Params: { id: string } }>(
     "/:id",
-    {
-      preValidation: [fastify.authenticate],
-    },
+    { preValidation: [fastify.authenticate] },
     async (request, reply) => {
       try {
         const result = await Quiz.findByIdAndDelete(request.params.id);
@@ -134,7 +141,11 @@ const quizRoutes: FastifyPluginAsync = async (fastify, opts) => {
 
         reply.code(204).send();
       } catch (error) {
-        reply.code(500).send(error);
+        handleError(
+          reply,
+          500,
+          `Error deleting published quiz: ${error.message}`,
+        );
       }
     },
   );

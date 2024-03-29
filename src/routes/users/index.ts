@@ -1,78 +1,110 @@
-import type { FastifyPluginAsync } from "fastify";
+import { FastifyPluginAsync } from "fastify";
 import { User } from "../../models/User";
 import bcrypt from "bcrypt";
 
-const user: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
+const userRoutes: FastifyPluginAsync = async (fastify, _opts) => {
+  // Centralized error handling middleware
+  const handleError = (reply, statusCode, message) => {
+    console.error(message);
+    reply.status(statusCode).send({ error: message });
+  };
+
   fastify.get<{
     Querystring: { offset?: string; limit?: string };
   }>("/", { preValidation: [fastify.authenticate] }, async (request, reply) => {
-    const offset = request.query.offset
-      ? parseInt(request.query.offset, 10)
-      : 0;
-    const limit = request.query.limit ? parseInt(request.query.limit, 10) : 10;
+    try {
+      const offset = parseInt(request.query.offset || "0", 10);
+      const limit = parseInt(request.query.limit || "10", 10);
 
-    const users = await User.find({ role: { $ne: "admin" } })
-      .skip(offset)
-      .limit(limit);
+      // Fetch users with projection
+      const users = await User.find({ role: { $ne: "admin" } }, "-password")
+        .skip(offset)
+        .limit(limit)
+        .lean();
 
-    reply.send({ users, offset, limit });
-  });
-
-  fastify.get<{
-    Body: any;
-    Reply: any;
-  }>("/:id", async (request: any, reply) => {
-    const user = await User.findById(request.params.id);
-    reply.send({ user });
-  });
-
-  fastify.post<{
-    Body: any;
-    Reply: any;
-  }>("/", async (request, reply) => {
-    const user = new User(request.body);
-    await user.save();
-    reply.code(201).send({ user });
-  });
-
-  fastify.put<{
-    Body: any;
-    Reply: any;
-  }>("/:id", async (request: any, reply) => {
-    const { id } = request.params;
-    const user = await request.body;
-
-    // Fetch the existing user
-    const existingUser = await User.findById(id).exec();
-    if (!existingUser) {
-      return reply.status(404).send({ message: "User not found" });
+      reply.send({ users, offset, limit });
+    } catch (error) {
+      handleError(reply, 500, "Internal Server Error");
     }
-
-    // Check if the new password is different from the old one
-    if (user.password !== existingUser.password) {
-      // Hash the new password
-      const salt = await bcrypt.genSalt(10);
-      user.password = await bcrypt.hash(user.password, salt);
-    }
-
-    // Update the user
-    const updatedUser = await User.findByIdAndUpdate(id, user, {
-      new: true,
-    }).exec();
-    if (!updatedUser) {
-      return reply.status(500).send({ message: "Failed to update user" });
-    }
-
-    reply.send({ user: updatedUser });
   });
 
-  fastify.delete<{
-    Body: any;
-    Reply: any;
-  }>("/:id", async (request: any, reply) => {
-    await User.findByIdAndDelete(request.params.id).exec();
-    reply.send({ message: "User deleted" });
-  });
+  fastify.get<{ Params: { id: string } }>(
+    "/:id",
+    { preValidation: [fastify.authenticate] },
+    async (request, reply) => {
+      try {
+        const user = await User.findById(request.params.id, "-password");
+        if (!user) {
+          return reply.code(404).send({ message: "User not found" });
+        }
+        reply.send({ user });
+      } catch (error) {
+        handleError(reply, 500, "Internal Server Error");
+      }
+    },
+  );
+
+  fastify.post<{ Body: any }>(
+    "/",
+    { preValidation: [fastify.authenticate] },
+    async (request, reply) => {
+      try {
+        const newUser = new User(request.body);
+        await newUser.save();
+        reply.code(201).send({ user: newUser });
+      } catch (error) {
+        handleError(reply, 400, "Failed to create user");
+      }
+    },
+  );
+
+  fastify.put<{ Params: { id: string }; Body: any }>(
+    "/:id",
+    { preValidation: [fastify.authenticate] },
+    async (request, reply) => {
+      try {
+        const { id } = request.params;
+        const { password, ...update } = request.body;
+
+        // Fetch the existing user
+        const existingUser = await User.findById(id);
+        if (!existingUser) {
+          return reply.code(404).send({ message: "User not found" });
+        }
+
+        // Check if the password has been updated
+        if (password && password !== existingUser.password) {
+          // Hash the new password
+          const salt = await bcrypt.genSalt(10);
+          update.password = await bcrypt.hash(password, salt);
+        }
+
+        // Update the user
+        const updatedUser = await User.findByIdAndUpdate(id, update, {
+          new: true,
+        });
+        reply.send({ user: updatedUser });
+      } catch (error) {
+        handleError(reply, 500, "Failed to update user");
+      }
+    },
+  );
+
+  fastify.delete<{ Params: { id: string } }>(
+    "/:id",
+    { preValidation: [fastify.authenticate] },
+    async (request, reply) => {
+      try {
+        const result = await User.findByIdAndDelete(request.params.id);
+        if (!result) {
+          return reply.code(404).send({ message: "User not found" });
+        }
+        reply.send({ message: "User deleted" });
+      } catch (error) {
+        handleError(reply, 500, "Failed to delete user");
+      }
+    },
+  );
 };
 
-export default user;
+export default userRoutes;

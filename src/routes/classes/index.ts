@@ -1,115 +1,91 @@
-import { type FastifyPluginAsync } from "fastify";
+import { FastifyPluginAsync } from "fastify";
 import { Class } from "../../models/Class";
-import { Client } from "../../models/Client";
 
-const classRoutes: FastifyPluginAsync = async (fastify, opts) => {
+const classRoutes: FastifyPluginAsync = async (fastify, _opts) => {
+  // Centralized error handling middleware
+  const handleError = (reply, statusCode, message) => {
+    console.error(message);
+    reply.status(statusCode).send({ error: message });
+  };
+
   fastify.get<{
     Querystring: { offset?: string; limit?: string };
-  }>(
-    "/",
-    {
-      preValidation: [fastify.authenticate],
-    },
-    async (request, reply) => {
-      const offset = request.query.offset
-        ? parseInt(request.query.offset, 10)
-        : 0;
-      const limit = request.query.limit
-        ? parseInt(request.query.limit, 10)
-        : 10;
-      // Assuming Class is a mongoose model or similar
-      const classes = await Class.find().skip(offset).limit(limit);
+  }>("/", { preValidation: [fastify.authenticate] }, async (request, reply) => {
+    try {
+      const offset = parseInt(request.query.offset || "0", 10);
+      const limit = parseInt(request.query.limit || "10", 10);
+      const classes = await Class.find({}, null, { skip: offset, limit }).lean();
       const totalCount = await Class.countDocuments();
-
       reply.send({ classes, totalCount, offset, limit });
-    },
-  );
-  // Create a new class
+    } catch (error) {
+      handleError(reply, 500, "Internal Server Error");
+    }
+  });
+
   fastify.post<{ Body: any }>(
     "/",
-    {
-      preValidation: [fastify.authenticate],
-    },
+    { preValidation: [fastify.authenticate] },
     async (request, reply) => {
       try {
         const newClass = new Class(request.body);
         await newClass.save();
         reply.code(201).send(newClass);
       } catch (error) {
-        reply.code(400).send(error);
+        handleError(reply, 400, "Failed to create class");
       }
     },
   );
 
-  // Get a single class by ID
   fastify.get<{ Params: { id: string } }>(
     "/:id",
-    {
-      preValidation: [fastify.authenticate],
-    },
+    { preValidation: [fastify.authenticate] },
     async (request, reply) => {
       try {
         const classDoc = await Class.findById(request.params.id)
-          .populate("teacher")
-          .populate("students");
+          .populate("teacher", "_id username") // Only populate necessary fields
+          .populate("students", "_id username").lean(); // Only populate necessary fields
         if (!classDoc) {
-          return await reply.code(404).send({ message: "Class not found" });
+          return reply.code(404).send({ message: "Class not found" });
         }
-
         reply.send({ class: classDoc });
       } catch (error) {
-        reply.code(500).send(error);
+        handleError(reply, 500, "Internal Server Error");
       }
     },
   );
 
-  // Update a class
   fastify.put<{ Params: { id: string }; Body: any }>(
     "/:id",
-    {
-      preValidation: [fastify.authenticate],
-    },
-    async (request: any, reply) => {
+    { preValidation: [fastify.authenticate] },
+    async (request, reply) => {
       try {
-        const client = await Client.findOne();
-        if (!client) {
-          return reply.code(404).send({ message: "Client not found" });
-        }
-        const updatedRequestBody = { ...request.body, client: client._id };
-
         const updatedClass = await Class.findByIdAndUpdate(
           request.params.id,
-          updatedRequestBody,
+          request.body,
           { new: true },
         );
-
         if (!updatedClass) {
           return reply.code(404).send({ message: "Class not found" });
         }
-
         reply.send(updatedClass);
       } catch (error) {
-        reply.code(500).send(error);
+        handleError(reply, 500, "Failed to update class");
       }
     },
   );
 
-  // Delete a class
   fastify.delete<{ Params: { id: string } }>(
     "/:id",
-    {
-      preValidation: [fastify.authenticate],
-    },
+    { preValidation: [fastify.authenticate] },
     async (request, reply) => {
       try {
         const result = await Class.findByIdAndDelete(request.params.id);
         if (!result) {
-          return await reply.code(404).send({ message: "Class not found" });
+          return reply.code(404).send({ message: "Class not found" });
         }
-
         reply.code(204).send();
       } catch (error) {
-        reply.code(500).send(error);
+        handleError(reply, 500, "Failed to delete class");
       }
     },
   );

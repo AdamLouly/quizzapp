@@ -1,30 +1,25 @@
-import { type FastifyPluginAsync } from "fastify";
+import { FastifyPluginAsync } from "fastify";
 import { User } from "../../models/User";
 
 const studentRoutes: FastifyPluginAsync = async (fastify, opts) => {
-  // Get available quizzes for the students
-  fastify.get("/quizzes", async (request, reply) => {
-    // ...implementation
-  });
-
-  // Submit answers for a quiz
-  fastify.post("/quizzes/:quizId/submit", async (request, reply) => {
-    // ...implementation
-  });
-
   fastify.get<{
     Querystring: { offset?: string; limit?: string };
-  }>("/", async (request, reply) => {
+  }>("/", { preValidation: [fastify.authenticate] }, async (request, reply) => {
     const offset = request.query.offset
       ? parseInt(request.query.offset, 10)
       : 0;
     const limit = request.query.limit ? parseInt(request.query.limit, 10) : 10;
 
-    const students = await User.find({ role: "student" })
-      .skip(offset)
-      .limit(limit);
-    const totalCount = await User.countDocuments({ role: "student" });
-    reply.send({ students, offset, limit, totalCount });
+    try {
+      const students = await User.find({ role: "student" })
+        .skip(offset)
+        .limit(limit);
+      const totalCount = await User.countDocuments({ role: "student" });
+      reply.send({ students, offset, limit, totalCount });
+    } catch (error) {
+      console.error("Error fetching students:", error);
+      reply.status(500).send({ error: "Internal Server Error" });
+    }
   });
 };
 

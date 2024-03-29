@@ -1,7 +1,5 @@
 import { type FastifyPluginAsync } from "fastify";
 import { PublishedQuiz } from "../../models/PublishedQuiz";
-import { Class } from "../../models/Class";
-import { User } from "../../models/User";
 
 type PublishedQuizRequest = {
   body: {
@@ -26,6 +24,7 @@ const publishedQuizRoutes: FastifyPluginAsync = async (fastify, opts) => {
       onRequest: [fastify.authenticate],
     },
     async (request: any, reply) => {
+      const user = request.user;
       const offset = request.query.offset
         ? parseInt(request.query.offset, 10)
         : 0;

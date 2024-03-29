@@ -13,7 +13,7 @@ const quizRoutes: FastifyPluginAsync = async (fastify, opts) => {
   }>(
     "/",
     {
-      onRequest: [fastify.authenticate],
+      preValidation: [fastify.authenticate],
     },
     async (request: any, reply) => {
       const offset = request.query.offset
@@ -41,7 +41,7 @@ const quizRoutes: FastifyPluginAsync = async (fastify, opts) => {
   fastify.post<{ Body: QuizCreationBody }>(
     "/",
     {
-      onRequest: [fastify.authenticate],
+      preValidation: [fastify.authenticate],
     },
     async (request: any, reply) => {
       const { title, content } = request.body;
@@ -95,13 +95,22 @@ const quizRoutes: FastifyPluginAsync = async (fastify, opts) => {
   fastify.get<{
     Body: any;
     Reply: any;
-  }>("/:id", async (request: any, reply) => {
-    const quiz = await Quiz.findById(request.params.id);
-    reply.send({ quiz });
-  });
+  }>(
+    "/:id",
+    {
+      preValidation: [fastify.authenticate],
+    },
+    async (request: any, reply) => {
+      const quiz = await Quiz.findById(request.params.id);
+      reply.send({ quiz });
+    },
+  );
 
   fastify.put<{ Body: any; Reply: any }>(
     "/:id",
+    {
+      preValidation: [fastify.authenticate],
+    },
     async (request: any, reply: any) => {
       const quiz = await Quiz.findByIdAndUpdate(
         request.params.id,
@@ -111,18 +120,24 @@ const quizRoutes: FastifyPluginAsync = async (fastify, opts) => {
     },
   );
 
-  fastify.delete<{ Params: { id: string } }>("/:id", async (request, reply) => {
-    try {
-      const result = await Quiz.findByIdAndDelete(request.params.id);
-      if (!result) {
-        return await reply.code(404).send({ message: "Quiz not found" });
-      }
+  fastify.delete<{ Params: { id: string } }>(
+    "/:id",
+    {
+      preValidation: [fastify.authenticate],
+    },
+    async (request, reply) => {
+      try {
+        const result = await Quiz.findByIdAndDelete(request.params.id);
+        if (!result) {
+          return await reply.code(404).send({ message: "Quiz not found" });
+        }
 
-      reply.code(204).send();
-    } catch (error) {
-      reply.code(500).send(error);
-    }
-  });
+        reply.code(204).send();
+      } catch (error) {
+        reply.code(500).send(error);
+      }
+    },
+  );
 };
 
 export default quizRoutes;

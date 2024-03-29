@@ -8,7 +8,7 @@ const classRoutes: FastifyPluginAsync = async (fastify, opts) => {
   }>(
     "/",
     {
-      // PreValidation: [fastify.authenticate] // preValidation as part of the route options
+      preValidation: [fastify.authenticate],
     },
     async (request, reply) => {
       const offset = request.query.offset
@@ -25,35 +25,50 @@ const classRoutes: FastifyPluginAsync = async (fastify, opts) => {
     },
   );
   // Create a new class
-  fastify.post<{ Body: any }>("/", async (request, reply) => {
-    try {
-      const newClass = new Class(request.body);
-      await newClass.save();
-      reply.code(201).send(newClass);
-    } catch (error) {
-      reply.code(400).send(error);
-    }
-  });
+  fastify.post<{ Body: any }>(
+    "/",
+    {
+      preValidation: [fastify.authenticate],
+    },
+    async (request, reply) => {
+      try {
+        const newClass = new Class(request.body);
+        await newClass.save();
+        reply.code(201).send(newClass);
+      } catch (error) {
+        reply.code(400).send(error);
+      }
+    },
+  );
 
   // Get a single class by ID
-  fastify.get<{ Params: { id: string } }>("/:id", async (request, reply) => {
-    try {
-      const classDoc = await Class.findById(request.params.id)
-        .populate("teacher")
-        .populate("students");
-      if (!classDoc) {
-        return await reply.code(404).send({ message: "Class not found" });
-      }
+  fastify.get<{ Params: { id: string } }>(
+    "/:id",
+    {
+      preValidation: [fastify.authenticate],
+    },
+    async (request, reply) => {
+      try {
+        const classDoc = await Class.findById(request.params.id)
+          .populate("teacher")
+          .populate("students");
+        if (!classDoc) {
+          return await reply.code(404).send({ message: "Class not found" });
+        }
 
-      reply.send({ class: classDoc });
-    } catch (error) {
-      reply.code(500).send(error);
-    }
-  });
+        reply.send({ class: classDoc });
+      } catch (error) {
+        reply.code(500).send(error);
+      }
+    },
+  );
 
   // Update a class
   fastify.put<{ Params: { id: string }; Body: any }>(
     "/:id",
+    {
+      preValidation: [fastify.authenticate],
+    },
     async (request: any, reply) => {
       try {
         const client = await Client.findOne();
@@ -80,18 +95,24 @@ const classRoutes: FastifyPluginAsync = async (fastify, opts) => {
   );
 
   // Delete a class
-  fastify.delete<{ Params: { id: string } }>("/:id", async (request, reply) => {
-    try {
-      const result = await Class.findByIdAndDelete(request.params.id);
-      if (!result) {
-        return await reply.code(404).send({ message: "Class not found" });
-      }
+  fastify.delete<{ Params: { id: string } }>(
+    "/:id",
+    {
+      preValidation: [fastify.authenticate],
+    },
+    async (request, reply) => {
+      try {
+        const result = await Class.findByIdAndDelete(request.params.id);
+        if (!result) {
+          return await reply.code(404).send({ message: "Class not found" });
+        }
 
-      reply.code(204).send();
-    } catch (error) {
-      reply.code(500).send(error);
-    }
-  });
+        reply.code(204).send();
+      } catch (error) {
+        reply.code(500).send(error);
+      }
+    },
+  );
 };
 
 export default classRoutes;

@@ -19,7 +19,7 @@ const quizResultRoutes: FastifyPluginAsync = async (fastify, opts) => {
   fastify.post<{ Body: QuizResultRequest }>(
     "/",
     {
-      onRequest: [fastify.authenticate],
+      preValidation: [fastify.authenticate],
     },
     async (request: any, reply) => {
       try {
@@ -84,7 +84,7 @@ const quizResultRoutes: FastifyPluginAsync = async (fastify, opts) => {
   }>(
     "/",
     {
-      onRequest: [fastify.authenticate],
+      preValidation: [fastify.authenticate],
     },
     async (request: any, reply) => {
       const offset = request.query.offset
@@ -115,7 +115,7 @@ const quizResultRoutes: FastifyPluginAsync = async (fastify, opts) => {
         // Filter out expired published quizzes that are already present in quiz results
         const filteredPublishedQuizzes = publishedQuizzes.filter(
           (publishedQuiz) => {
-            return !quizResults.some((quizResult:any) => {
+            return !quizResults.some((quizResult: any) => {
               return quizResult.publishedQuizId.equals(publishedQuiz._id);
             });
           },

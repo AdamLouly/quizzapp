@@ -6,7 +6,7 @@ import { User } from "../../models/User";
 const teacherRoutes: FastifyPluginAsync = async (fastify, opts) => {
   fastify.get<{
     Querystring: { offset?: string; limit?: string };
-  }>("/", async (request, reply) => {
+  }>("/", { preValidation: [fastify.authenticate] }, async (request, reply) => {
     const offset = request.query.offset
       ? parseInt(request.query.offset, 10)
       : 0;

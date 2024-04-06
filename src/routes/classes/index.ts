@@ -15,7 +15,7 @@ const classRoutes: FastifyPluginAsync = async (fastify, _opts) => {
       const offset = parseInt(request.query.offset || "0", 10);
       const limit = parseInt(request.query.limit || "10", 10);
       const classes = await Class.find({}, null, { skip: offset, limit })
-        .populate(["teacher", "students", "client"])
+        .populate(["teacher", "client"])
         .lean();
       const totalCount = await Class.countDocuments();
       reply.send({ classes, totalCount, offset, limit });

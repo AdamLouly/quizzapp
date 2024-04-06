@@ -14,7 +14,9 @@ const classRoutes: FastifyPluginAsync = async (fastify, _opts) => {
     try {
       const offset = parseInt(request.query.offset || "0", 10);
       const limit = parseInt(request.query.limit || "10", 10);
-      const classes = await Class.find({}, null, { skip: offset, limit }).lean();
+      const classes = await Class.find({}, null, { skip: offset, limit })
+        .populate(["teacher", "students", "client"])
+        .lean();
       const totalCount = await Class.countDocuments();
       reply.send({ classes, totalCount, offset, limit });
     } catch (error) {
@@ -43,7 +45,8 @@ const classRoutes: FastifyPluginAsync = async (fastify, _opts) => {
       try {
         const classDoc = await Class.findById(request.params.id)
           .populate("teacher", "_id username") // Only populate necessary fields
-          .populate("students", "_id username").lean(); // Only populate necessary fields
+          .populate("students", "_id username")
+          .lean(); // Only populate necessary fields
         if (!classDoc) {
           return reply.code(404).send({ message: "Class not found" });
         }

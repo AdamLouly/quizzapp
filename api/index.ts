@@ -1,36 +1,27 @@
-"use strict";
+import Fastify from 'fastify';
+import app from '../src/app';
 
-// Read the .env file.
-import * as dotenv from "dotenv";
-dotenv.config();
-
-// Require the framework
-import Fastify from "fastify";
-
-// Instantiate Fastify with some config
-const app = Fastify({
-  logger: true,
+const fastify = Fastify({
+  logger: true
 });
 
-// Register your application as a normal plugin.
-app.register(import("../src/server"));
+// This flag checks if the app is ready
+let isReady = false;
+
+// Initialize and register the app only once
+fastify.register(app).ready(err => {
+  if (err) throw err;
+
+  console.log('Routes:', fastify.printRoutes());
+  isReady = true;
+});
 
 export default async (req, res) => {
-  app.ready((err) => {
-    if (err) {
-      app.log.error(err);
-      process.exit(1);
-    }
+  if (!isReady) {
+    res.statusCode = 503;
+    res.end('Server is not ready yet');
+    return;
+  }
 
-    app.log.info(
-      "All routes loaded! Check your console for the route details.",
-    );
-
-    console.log(app.printRoutes());
-
-    app.log.info(
-      `Server listening on port ${Number(process.env.PORT ?? 3000)}`,
-    );
-  });
-  app.server.emit("request", req, res);
+  fastify.server.emit('request', req, res);
 };

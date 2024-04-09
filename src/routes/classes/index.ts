@@ -12,9 +12,14 @@ const classRoutes: FastifyPluginAsync = async (fastify, _opts) => {
     Querystring: { offset?: string; limit?: string };
   }>("/", { preValidation: [fastify.authenticate] }, async (request, reply) => {
     try {
+      const user = request.user;
       const offset = parseInt(request.query.offset || "0", 10);
       const limit = parseInt(request.query.limit || "10", 10);
-      const classes = await Class.find({}, null, { skip: offset, limit })
+      let query = {};
+      if (user.role === "teacher") {
+        query = { teacher: user._id };
+      }
+      const classes = await Class.find(query, null, { skip: offset, limit })
         .populate(["teacher", "client"])
         .lean();
       const totalCount = await Class.countDocuments();

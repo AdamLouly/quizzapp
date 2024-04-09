@@ -1,27 +1,22 @@
-import Fastify from 'fastify';
-import app from '../src/app';
+import * as dotenv from "dotenv";
+import routes from "../src/app";
 
-const fastify = Fastify({
-  logger: true
+dotenv.config();
+
+// Require the framework
+import Fastify from "fastify";
+
+// Instantiate Fastify with some config
+const app = Fastify({
+  logger: false,
 });
 
-// This flag checks if the app is ready
-let isReady = false;
-
-// Initialize and register the app only once
-fastify.register(app).ready(err => {
-  if (err) throw err;
-
-  console.log('Routes:', fastify.printRoutes());
-  isReady = true;
+// Register your application as a normal plugin.
+app.register(routes, {
+  prefix: "/",
 });
 
 export default async (req, res) => {
-  if (!isReady) {
-    res.statusCode = 503;
-    res.end('Server is not ready yet');
-    return;
-  }
-
-  fastify.server.emit('request', req, res);
+  await app.ready();
+  app.server.emit("request", req, res);
 };

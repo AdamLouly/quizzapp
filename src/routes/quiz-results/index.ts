@@ -75,8 +75,6 @@ const quizResultRoutes: FastifyPluginAsync = async (fastify, opts) => {
     Querystring: { offset?: string; limit?: string };
   }>("/", { preValidation: [fastify.authenticate] }, async (request, reply) => {
     try {
-      const offset = parseInt(request.query.offset || "0", 10);
-      const limit = parseInt(request.query.limit || "10", 10);
       const currentDate = new Date();
 
       const publishedQuizzes = await PublishedQuiz.find({
@@ -99,16 +97,9 @@ const quizResultRoutes: FastifyPluginAsync = async (fastify, opts) => {
           ),
       );
 
-      const totalQuizResultsCount = quizResults.length;
-      const totalPublishedQuizzesCount = filteredPublishedQuizzes.length;
-
       reply.send({
         quizzes: quizResults,
         publishedQuizzes: filteredPublishedQuizzes,
-        totalQuizResultsCount,
-        totalPublishedQuizzesCount,
-        offset,
-        limit,
       });
     } catch (error) {
       handleError(reply, 500, "Internal Server Error");

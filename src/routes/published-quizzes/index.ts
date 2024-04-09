@@ -43,18 +43,22 @@ const publishedQuizRoutes: FastifyPluginAsync = async (fastify, opts) => {
         const quizResults = await QuizResult.find({
           studentId: userId,
         }).distinct("publishedQuizId");
+
         query = {
           classId: userClass._id,
           dueDate: { $gte: currentDate },
           _id: { $nin: quizResults },
         };
       } else if (role === "teacher") {
-        const userClass = await Class.findOne({ teacher: userId }).lean();
-        if (!userClass) {
+        const userClasses = await Class.find({ teacher: userId }).lean();
+        const classIds = userClasses.map((cls) => cls._id);
+
+        if (!classIds.length) {
           return reply.send({ quizzes: [], totalCount: 0, offset, limit });
         }
+
         query = {
-          classId: userClass._id,
+          classId: { $in: classIds },
           dueDate: { $gte: currentDate },
         };
       }

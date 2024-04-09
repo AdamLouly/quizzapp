@@ -81,6 +81,7 @@ const quizResultRoutes: FastifyPluginAsync = async (fastify, opts) => {
         dueDate: { $lt: currentDate },
       })
         .populate("quizId")
+        .sort({ dueDate: -1 })
         .lean();
 
       const quizResults = await QuizResult.find({
@@ -88,6 +89,7 @@ const quizResultRoutes: FastifyPluginAsync = async (fastify, opts) => {
         publishedQuizId: { $in: publishedQuizzes.map((pq) => pq._id) },
       })
         .populate("quizId")
+        .sort({ createdAt: -1 })
         .lean();
 
       const filteredPublishedQuizzes = publishedQuizzes.filter(

@@ -38,8 +38,9 @@ const UserSchema: Schema = new Schema(
       type: String,
       required: true,
       enum: ["admin", "teacher", "student"],
+      index: true,
     },
-    client: { type: Schema.Types.ObjectId, ref: "Client" },
+    client: { type: Schema.Types.ObjectId, ref: "Client", index: true },
     profilePicture: { type: String, required: false },
     status: {
       type: String,

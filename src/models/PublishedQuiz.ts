@@ -28,6 +28,7 @@ const PublishedQuizSchema: Schema = new Schema(
       index: true,
     },
     dueDate: { type: Date, required: true },
+    client: { type: Schema.Types.ObjectId, ref: "Client", index: true },
   },
   { timestamps: true },
 );

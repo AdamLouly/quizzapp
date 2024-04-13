@@ -7,7 +7,7 @@ const client: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
     reply.status(statusCode).send({ error: message });
   };
 
-  fastify.get<{
+  /* fastify.get<{
     Querystring: { offset?: string; limit?: string };
   }>("/", { preValidation: [fastify.authenticate] }, async (request, reply) => {
     try {
@@ -19,6 +19,19 @@ const client: FastifyPluginAsync = async (fastify, _opts): Promise<void> => {
 
       // Send the response with clients
       reply.send({ clients, offset, limit });
+    } catch (error) {
+      handleError(reply, 500, "Internal Server Error");
+    }
+  }); */
+
+  fastify.get<{
+    Querystring: { offset?: string; limit?: string };
+  }>("/", { preValidation: [fastify.authenticate] }, async (request, reply) => {
+    try {
+      const clients = await Client.findById(request.user.client).lean();
+
+      // Send the response with clients
+      reply.send({ clients });
     } catch (error) {
       handleError(reply, 500, "Internal Server Error");
     }

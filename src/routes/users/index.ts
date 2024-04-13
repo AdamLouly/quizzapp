@@ -3,57 +3,82 @@ import { User } from "../../models/User";
 import bcrypt from "bcrypt";
 
 const userRoutes: FastifyPluginAsync = async (fastify, _opts) => {
-  // Centralized error handling middleware
   const handleError = (reply, statusCode, message) => {
     console.error(message);
     reply.status(statusCode).send({ error: message });
   };
 
-  fastify.get<{
-    Querystring: { offset?: string; limit?: string };
-  }>("/", { preValidation: [fastify.authenticate] }, async (request, reply) => {
-    try {
-      const offset = parseInt(request.query.offset || "0", 10);
-      const limit = parseInt(request.query.limit || "10", 10);
-
-      // Fetch users with projection
-      const users = await User.find({ role: { $ne: "admin" } }, "-password")
-        .skip(offset)
-        .limit(limit)
-        .lean();
-
-      reply.send({ users, offset, limit });
-    } catch (error) {
-      handleError(reply, 500, "Internal Server Error");
-    }
-  });
-
-  fastify.get<{ Params: { id: string } }>(
-    "/:id",
+  fastify.get(
+    "/",
     { preValidation: [fastify.authenticate] },
     async (request, reply) => {
       try {
-        const user = await User.findById(request.params.id, "-password");
-        if (!user) {
-          return reply.code(404).send({ message: "User not found" });
-        }
-        reply.send({ user });
+        const clientId = request.user.client;
+        const offset = parseInt(request.query.offset || "0", 10);
+        const limit = parseInt(request.query.limit || "10", 10);
+
+        const users = await User.find(
+          { client: clientId, role: { $ne: "admin" } },
+          "-password",
+        )
+          .skip(offset)
+          .limit(limit)
+          .lean();
+
+        const totalCount = await User.countDocuments({
+          client: clientId,
+          role: { $ne: "admin" },
+        });
+
+        reply.send({ users, totalCount, offset, limit });
       } catch (error) {
         handleError(reply, 500, "Internal Server Error");
       }
     },
   );
 
-  fastify.post<{ Body: any }>(
+  fastify.post(
     "/",
     { preValidation: [fastify.authenticate] },
     async (request, reply) => {
       try {
-        const newUser = new User(request.body);
+        const { firstname, lastname, username, email, password, role, client } =
+          request.body;
+        const newUser = new User({
+          firstname,
+          lastname,
+          username,
+          email,
+          password,
+          role,
+          client: request.user.client,
+        });
         await newUser.save();
         reply.code(201).send({ user: newUser });
       } catch (error) {
+        console.log(error);
         handleError(reply, 400, "Failed to create user");
+      }
+    },
+  );
+
+  fastify.get<{ Params: { id: string } }>(
+    "/:id",
+    { preValidation: [fastify.authenticate] },
+    async (request, reply) => {
+      try {
+        const user = await User.findOne(
+          { _id: request.params.id, client: request.user.client },
+          "-password",
+        );
+        if (!user) {
+          return reply
+            .code(404)
+            .send({ message: "User not found or not part of your client" });
+        }
+        reply.send({ user });
+      } catch (error) {
+        handleError(reply, 500, "Internal Server Error");
       }
     },
   );
@@ -63,26 +88,20 @@ const userRoutes: FastifyPluginAsync = async (fastify, _opts) => {
     { preValidation: [fastify.authenticate] },
     async (request, reply) => {
       try {
-        const { id } = request.params;
-        const { password, ...update } = request.body;
-
-        // Fetch the existing user
-        const existingUser = await User.findById(id);
-        if (!existingUser) {
-          return reply.code(404).send({ message: "User not found" });
+        const { password, ...updateData } = request.body;
+        if (password) {
+          updateData.password = await bcrypt.hash(password, 10);
         }
-
-        // Check if the password has been updated
-        if (password && password !== existingUser.password) {
-          // Hash the new password
-          const salt = await bcrypt.genSalt(10);
-          update.password = await bcrypt.hash(password, salt);
+        const updatedUser = await User.findOneAndUpdate(
+          { _id: request.params.id, client: request.user.client },
+          updateData,
+          { new: true, omitUndefined: true },
+        ).select("-password");
+        if (!updatedUser) {
+          return reply
+            .code(404)
+            .send({ message: "User not found or not part of your client" });
         }
-
-        // Update the user
-        const updatedUser = await User.findByIdAndUpdate(id, update, {
-          new: true,
-        });
         reply.send({ user: updatedUser });
       } catch (error) {
         handleError(reply, 500, "Failed to update user");
@@ -95,11 +114,16 @@ const userRoutes: FastifyPluginAsync = async (fastify, _opts) => {
     { preValidation: [fastify.authenticate] },
     async (request, reply) => {
       try {
-        const result = await User.findByIdAndDelete(request.params.id);
-        if (!result) {
-          return reply.code(404).send({ message: "User not found" });
+        const result = await User.deleteOne({
+          _id: request.params.id,
+          client: request.user.client,
+        });
+        if (result.deletedCount === 0) {
+          return reply
+            .code(404)
+            .send({ message: "User not found or not part of your client" });
         }
-        reply.send({ message: "User deleted" });
+        reply.code(204).send();
       } catch (error) {
         handleError(reply, 500, "Failed to delete user");
       }

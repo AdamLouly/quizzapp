@@ -20,14 +20,17 @@ const studentRoutes: FastifyPluginAsync = async (fastify, opts) => {
         return reply.code(400).send({ error: "Invalid offset or limit" });
       }
 
-      // Fetch students with projection
-      const students = await User.find({ role: "student" })
-        .skip(offset)
-        .limit(limit)
-        .lean();
+      // Assuming the authenticated user's client ID is stored in the request after authentication
+      const clientId = request.user.client;
 
-      // Get total count of students
-      const totalCount = await User.countDocuments({ role: "student" });
+      // Perform the fetch and count in parallel for performance optimization
+      const [students, totalCount] = await Promise.all([
+        User.find({ role: "student", client: clientId }, "-password")
+          .skip(offset)
+          .limit(limit)
+          .lean(),
+        User.countDocuments({ role: "student", client: clientId })
+      ]);
 
       // Send response
       reply.send({ students, offset, limit, totalCount });

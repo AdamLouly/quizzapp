@@ -30,6 +30,7 @@ const QuizSchema: Schema = new Schema(
       required: true,
       index: true,
     },
+    client: { type: Schema.Types.ObjectId, ref: "Client", index: true },
   },
   { timestamps: true },
 );

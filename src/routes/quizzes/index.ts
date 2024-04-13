@@ -13,36 +13,55 @@ const quizRoutes: FastifyPluginAsync = async (fastify, opts) => {
     reply.status(statusCode).send({ error: message });
   };
 
-  fastify.get<{
-    Querystring: { offset?: string; limit?: string };
-  }>("/", { preValidation: [fastify.authenticate] }, async (request, reply) => {
-    try {
-      const { offset = "0", limit = "10" } = request.query;
-      const filter: any = {};
-      const { role, _id: userId } = request.user;
-
-      if (role === "teacher") {
-        filter.createdBy = userId;
-      }
-
-      const quizzes = await Quiz.find(filter)
-        .sort({ createdAt: -1 })
-        .skip(parseInt(offset))
-        .limit(parseInt(limit))
-        .lean();
-      const totalCount = await Quiz.countDocuments(filter);
-      reply.send({ quizzes, totalCount, offset, limit });
-    } catch (error) {
-      handleError(reply, 500, "Internal Server Error");
+  const validatePagination = (offsetStr, limitStr) => {
+    const offset = parseInt(offsetStr || "0", 10);
+    const limit = parseInt(limitStr || "10", 10);
+    if (
+      isNaN(offset) ||
+      isNaN(limit) ||
+      offset < 0 ||
+      limit <= 0 ||
+      limit > 100
+    ) {
+      throw new Error("Invalid pagination parameters");
     }
-  });
+    return { offset, limit };
+  };
+
+  fastify.get<{ Querystring: { offset?: string; limit?: string } }>(
+    "/",
+    { preValidation: [fastify.authenticate] },
+    async (request, reply) => {
+      try {
+        const { offset, limit } = validatePagination(
+          request.query.offset,
+          request.query.limit,
+        );
+        const { role, _id: userId, client } = request.user;
+        const filter: any =
+          role === "teacher" ? { createdBy: userId, client } : { client };
+
+        const [quizzes, totalCount] = await Promise.all([
+          Quiz.find(filter)
+            .sort({ createdAt: -1 })
+            .skip(offset)
+            .limit(limit)
+            .lean(),
+          Quiz.countDocuments(filter),
+        ]);
+
+        reply.send({ quizzes, totalCount, offset, limit });
+      } catch (error) {
+        handleError(reply, 500, error.message);
+      }
+    },
+  );
 
   fastify.post<{ Body: QuizCreationBody }>(
     "/",
     { preValidation: [fastify.authenticate] },
     async (request, reply) => {
       const { title, content } = request.body;
-
       try {
         const externalApiResponse = await axios.post(
           `${process.env.QUIZ_GENERATION_API_URL}/generate_mcq`,
@@ -53,10 +72,9 @@ const quizRoutes: FastifyPluginAsync = async (fastify, opts) => {
             },
           },
         );
-
         const questionsFromExternalAPI =
           externalApiResponse?.data?.mcq?.questions;
-
+        
         if (!questionsFromExternalAPI) {
           return reply.code(400).send({ error: "Failed to create quiz" });
         }
@@ -72,20 +90,21 @@ const quizRoutes: FastifyPluginAsync = async (fastify, opts) => {
         const newQuiz = new Quiz({
           title,
           content,
-          createdBy: request.user?._id,
+          createdBy: request.user._id,
+          client: request.user.client,
           questions: sampleQuestions,
         });
-        const savedQuiz = await newQuiz.save();
 
+        const savedQuiz = await newQuiz.save();
         reply.code(201).send({ quiz: savedQuiz });
-      } catch (error: any) {
+      } catch (error) {
         handleError(reply, 500, `Failed to create quiz: ${error.message}`);
       }
     },
   );
 
-  const findQuizById = async (id) => {
-    return await Quiz.findById(id);
+  const findQuiz = async (id, clientId) => {
+    return Quiz.findOne({ _id: id, client: clientId });
   };
 
   fastify.get<{ Params: { id: string } }>(
@@ -93,17 +112,13 @@ const quizRoutes: FastifyPluginAsync = async (fastify, opts) => {
     { preValidation: [fastify.authenticate] },
     async (request, reply) => {
       try {
-        const quiz = await findQuizById(request.params.id);
+        const quiz = await findQuiz(request.params.id, request.user.client);
         if (!quiz) {
           return reply.code(404).send({ message: "Quiz not found" });
         }
         reply.send({ quiz });
       } catch (error) {
-        handleError(
-          reply,
-          500,
-          `Error fetching published quiz: ${error.message}`,
-        );
+        handleError(reply, 500, `Error fetching quiz: ${error.message}`);
       }
     },
   );
@@ -113,18 +128,21 @@ const quizRoutes: FastifyPluginAsync = async (fastify, opts) => {
     { preValidation: [fastify.authenticate] },
     async (request, reply) => {
       try {
-        const quiz = await Quiz.findByIdAndUpdate(
-          request.params.id,
-          request.body,
+        const update = { ...request.body, client: request.user.client };
+        const quiz = await Quiz.findOneAndUpdate(
+          { _id: request.params.id, client: request.user.client },
+          update,
           { new: true },
         );
+
+        if (!quiz) {
+          return reply
+            .code(404)
+            .send({ message: "Quiz not found or not authorized" });
+        }
         reply.send({ quiz });
       } catch (error) {
-        handleError(
-          reply,
-          500,
-          `Error updating published quiz: ${error.message}`,
-        );
+        handleError(reply, 500, `Error updating quiz: ${error.message}`);
       }
     },
   );
@@ -134,18 +152,20 @@ const quizRoutes: FastifyPluginAsync = async (fastify, opts) => {
     { preValidation: [fastify.authenticate] },
     async (request, reply) => {
       try {
-        const result = await Quiz.findByIdAndDelete(request.params.id);
+        const result = await Quiz.findOneAndDelete({
+          _id: request.params.id,
+          client: request.user.client,
+        });
+
         if (!result) {
-          return await reply.code(404).send({ message: "Quiz not found" });
+          return reply
+            .code(404)
+            .send({ message: "Quiz not found or not authorized" });
         }
 
         reply.code(204).send();
       } catch (error) {
-        handleError(
-          reply,
-          500,
-          `Error deleting published quiz: ${error.message}`,
-        );
+        handleError(reply, 500, `Error deleting quiz: ${error.message}`);
       }
     },
   );

@@ -1,5 +1,5 @@
 // Require library to exit fastify process, gracefully (if possible)
-import closeWithGrace from "close-with-grace";
+/* import closeWithGrace from "close-with-grace"; */
 import * as dotenv from "dotenv";
 // Require the framework
 import Fastify from "fastify";
@@ -28,7 +28,7 @@ void server.register(app);
 void initSwagger(server);
 
 // Delay is the number of milliseconds for the graceful close to finish
-const closeListeners = closeWithGrace({ delay: 500 }, async (opts: any) => {
+/* const closeListeners = closeWithGrace({ delay: 500 }, async (opts: any) => {
   if (opts.err) {
     server.log.error(opts.err);
   }
@@ -62,6 +62,6 @@ void server.ready((err) => {
   server.log.info(
     `Server listening on port ${Number(process.env.PORT ?? 3000)}`,
   );
-});
+}); */
 
 export { server as app };

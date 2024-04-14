@@ -1,6 +1,7 @@
 import { FastifyPluginAsync } from "fastify";
 import { QuizResult } from "../../models/QuizResult";
 import { PublishedQuiz } from "../../models/PublishedQuiz";
+import { Class } from "../../models/Class";
 
 type QuizResultRequest = {
   body: {
@@ -77,8 +78,13 @@ const quizResultRoutes: FastifyPluginAsync = async (fastify, opts) => {
     try {
       const currentDate = new Date();
 
+      // Fetch classes in which the user is enrolled
+      const userClasses = await Class.find({ students: request.user._id });
+
+      // Use class IDs to filter published quizzes
       const publishedQuizzes = await PublishedQuiz.find({
         dueDate: { $lt: currentDate },
+        classId: { $in: userClasses.map((c) => c._id) }, // Filter by user's classes
       })
         .populate("quizId")
         .sort({ dueDate: -1 })
@@ -104,6 +110,7 @@ const quizResultRoutes: FastifyPluginAsync = async (fastify, opts) => {
         publishedQuizzes: filteredPublishedQuizzes,
       });
     } catch (error) {
+      console.log(error);
       handleError(reply, 500, "Internal Server Error");
     }
   });

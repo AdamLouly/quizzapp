@@ -76,49 +76,101 @@ const quizResultRoutes: FastifyPluginAsync = async (fastify, opts) => {
     Querystring: { offset?: string; limit?: string };
   }>("/", { preValidation: [fastify.authenticate] }, async (request, reply) => {
     try {
-      const currentDate = new Date();
+      // Determine the role of the user
+      const isTeacher = request.user.role === "teacher";
 
-      // Fetch classes in which the user is enrolled
-      const userClasses = await Class.find({ students: request.user._id });
+      if (isTeacher) {
+        // Fetch classes the teacher is associated with
+        const teacherClasses = await Class.find({ teacher: request.user._id });
+        if (teacherClasses.length === 0) {
+          // No classes found for this teacher
+          return reply.send({
+            message: "No classes found for this teacher",
+            /*  publishedQuizzes: [], */
+            quizzes: [],
+          });
+        }
 
-      // Use class IDs to filter published quizzes
-      const publishedQuizzes = await PublishedQuiz.find({
-        dueDate: { $lt: currentDate },
-        classId: { $in: userClasses.map((c) => c._id) }, // Filter by user's classes
-      })
-        .populate("quizId")
-        .sort({ dueDate: -1 })
-        .lean();
+        // Use class IDs to filter published quizzes for the teacher's classes
+        /* const publishedQuizzes = await PublishedQuiz.find({
+          classId: { $in: teacherClasses.map((c) => c._id) },
+          dueDate: { $lte: new Date() },
+        })
+          .populate("quizId", "title content score")
+          .sort({ dueDate: -1 })
+          .select("_id score createdAt publishedQuizId dueDate")
+          .lean(); */
 
-      const quizResults = await QuizResult.find({
-        studentId: request.user._id,
-        publishedQuizId: { $in: publishedQuizzes.map((pq) => pq._id) },
-      })
-        .populate("quizId")
-        .sort({ createdAt: -1 })
-        .lean();
+        // Get all students IDs from these classes
+        const studentIds = teacherClasses.flatMap((c) => c.students);
 
-      const filteredPublishedQuizzes = publishedQuizzes.filter(
-        (publishedQuiz) =>
-          !quizResults.some((quizResult) =>
-            quizResult.publishedQuizId.equals(publishedQuiz._id),
-          ),
-      );
+        // Fetch quiz results for quizzes published in the teacher's classes by students in these classes
+        const quizResults = await QuizResult.find({
+          /* 
+          publishedQuizId: { $in: publishedQuizzes.map((pq) => pq._id) }, */
+          studentId: { $in: studentIds },
+        })
+          .populate("quizId", "title content score")
+          .populate("publishedQuizId", "dueDate _id")
+          .populate("studentId", "username")
+          .sort({ createdAt: -1 })
+          .select("_id score createdAt publishedQuizId")
+          .lean();
 
-      reply.send({
-        quizzes: quizResults,
-        publishedQuizzes: filteredPublishedQuizzes,
-      });
+        reply.send({
+          /* publishedQuizzes, */
+          quizzes: quizResults,
+        });
+      } else {
+        // Student process: Fetch classes in which the user is enrolled
+        const userClasses = await Class.find({ students: request.user._id });
+
+        if (userClasses.length === 0) {
+          // No classes found for this student
+          return reply.send({
+            message: "No classes found for this student",
+            publishedQuizzes: [],
+            quizzes: [],
+          });
+        }
+
+        // Use class IDs to filter published quizzes
+        /* const publishedQuizzes = await PublishedQuiz.find({
+          classId: { $in: userClasses.map((c) => c._id) },
+          dueDate: { $lte: new Date() },
+        })
+          .populate("quizId", "title content score")
+          .sort({ dueDate: -1 })
+          .select("_id score createdAt publishedQuizId dueDate")
+          .lean(); */
+
+        const quizResults = await QuizResult.find({
+          studentId: request.user._id,
+          /* publishedQuizId: { $in: publishedQuizzes.map((pq) => pq._id) }, */
+        })
+          .populate("quizId", "title content score")
+          .populate("publishedQuizId", "dueDate _id")
+          .sort({ createdAt: -1 })
+          .select("_id score createdAt publishedQuizId")
+          .lean();
+
+        reply.send({
+          /* publishedQuizzes, */
+          quizzes: quizResults,
+        });
+      }
     } catch (error) {
       console.log(error);
-      handleError(reply, 500, "Internal Server Error");
+      reply.status(500).send({ error: "Internal Server Error" });
     }
   });
 
   fastify.get<{ Params: { id: string } }>("/:id", async (request, reply) => {
     try {
       const quiz = await QuizResult.findById(request.params.id)
+
         .populate("quizId")
+        .populate({ path: "publishedQuizId", select: "dueDate _id" })
         .lean();
       if (!quiz) {
         return reply.code(404).send({ message: "Quiz result not found" });

@@ -12,54 +12,6 @@ const quizResultRoutes: FastifyPluginAsync = async (fastify, opts) => {
       .send({ error: "Internal Server Error", details: error.message });
   };
 
-  // Reusable function to fetch filtered quiz results
-  async function fetchFilteredQuizResults(
-    teacherClasses,
-    studentIds,
-    limit,
-    offset,
-  ) {
-    const publishedQuizzes = await PublishedQuiz.find({
-      classId: { $in: teacherClasses.map((c) => c._id) },
-    }).select("_id");
-
-    if (publishedQuizzes.length === 0) return null;
-
-    const quizFilter = {
-      publishedQuizId: { $in: publishedQuizzes.map((pq) => pq._id) },
-    };
-    if (studentIds && studentIds.length > 0) {
-      quizFilter.studentId = { $in: studentIds };
-    }
-
-    const [quizResults, totalCount] = await Promise.all([
-      QuizResult.find(quizFilter)
-        .populate({
-          path: "quizId",
-          select: "title content score",
-        })
-        .populate({
-          path: "publishedQuizId",
-          populate: {
-            path: "classId",
-            select: "name",
-          },
-          select: "dueDate _id",
-        })
-        .populate({
-          path: "studentId",
-          select: "username",
-        })
-        .sort({ createdAt: -1 })
-        .skip(offset)
-        .limit(limit)
-        .lean(),
-      QuizResult.countDocuments(quizFilter),
-    ]);
-
-    return { quizResults, totalCount };
-  }
-
   fastify.post<{ Body: typeof QuizResultRequest }>(
     "/",
     {
@@ -122,77 +74,42 @@ const quizResultRoutes: FastifyPluginAsync = async (fastify, opts) => {
     };
   }>("/", { preValidation: [fastify.authenticate] }, async (request, reply) => {
     try {
-      const isTeacher = request.user.role === "teacher";
-      const { limit, offset, studentIds, classIds } = request.query;
-      const parsedLimit = parseInt(limit) || 10;
-      const parsedOffset = parseInt(offset) || 0;
-      const parsedStudentIds = studentIds ? studentIds.split(",") : [];
-      if (isTeacher) {
-        const teacherClassesQuery = { teacher: request.user._id };
-        if (classIds && classIds.length > 0) {
-          teacherClassesQuery._id = { $in: classIds };
-        }
-        const teacherClasses = await Class.find(teacherClassesQuery);
-        if (teacherClasses.length === 0) {
-          return reply.send({
-            message: "No classes found for this teacher",
-            totalCount: 0,
-            quizzes: [],
-          });
-        }
-        if (isTeacher && classIds == "" && studentIds == "") {
-          return reply.status(200).send({
-            message:
-              "You must select at least one class or student to fetch quiz results.",
-            totalCount: 0,
-            quizzes: [],
-          });
-        }
+      const currentDate = new Date();
 
-        const results = await fetchFilteredQuizResults(
-          teacherClasses,
-          parsedStudentIds,
-          parsedLimit,
-          parsedOffset,
-        );
-        if (!results) {
-          return reply.send({
-            message: "No quizzes found for these classes",
-            totalCount: 0,
-            quizzes: [],
-          });
-        }
+      // Fetch classes in which the user is enrolled
+      const userClasses = await Class.find({ students: request.user._id });
 
-        reply.send({
-          totalCount: results.totalCount,
-          quizzes: results.quizResults,
-        });
-      } else {
-        // For students, filter by enrolled classes and optionally by specific quizzes
-        const userClasses = await Class.find({ students: request.user._id });
-        if (userClasses.length === 0) {
-          return reply.send({
-            message: "No classes found for this student",
-            publishedQuizzes: [],
-            quizzes: [],
-          });
-        }
+      // Use class IDs to filter published quizzes
+      const publishedQuizzes = await PublishedQuiz.find({
+        dueDate: { $lt: currentDate },
+        classId: { $in: userClasses.map((c) => c._id) }, // Filter by user's classes
+      })
+        .populate("quizId")
+        .sort({ dueDate: -1 })
+        .lean();
 
-        const quizResults = await QuizResult.find({
-          studentId: request.user._id,
-        })
-          .populate("quizId", "title content score")
-          .populate("publishedQuizId", "dueDate _id")
-          .sort({ createdAt: -1 })
-          .select("_id score createdAt publishedQuizId")
-          .lean();
+      const quizResults = await QuizResult.find({
+        studentId: request.user._id,
+        publishedQuizId: { $in: publishedQuizzes.map((pq) => pq._id) },
+      })
+        .populate("quizId")
+        .sort({ createdAt: -1 })
+        .lean();
 
-        reply.send({
-          quizzes: quizResults,
-        });
-      }
+      /* const filteredPublishedQuizzes = publishedQuizzes.filter(
+        (publishedQuiz) =>
+          !quizResults.some((quizResult) =>
+            quizResult.publishedQuizId.equals(publishedQuiz._id),
+          ),
+      ); */
+
+      reply.send({
+        quizzes: quizResults,
+        /* publishedQuizzes: filteredPublishedQuizzes, */
+      });
     } catch (error) {
-      handleError(reply, error);
+      console.log(error);
+      handleError(reply, 500, "Internal Server Error");
     }
   });
 

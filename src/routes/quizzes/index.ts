@@ -28,7 +28,7 @@ const quizRoutes: FastifyPluginAsync = async (fastify, opts) => {
     return { offset, limit };
   };
 
-  fastify.get<{ Querystring: { offset?: string; limit?: string } }>(
+  fastify.get<{ Querystring: { offset?: string; limit?: string, classId } }>(
     "/",
     { preValidation: [fastify.authenticate] },
     async (request, reply) => {

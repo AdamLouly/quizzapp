@@ -28,7 +28,7 @@ const quizRoutes: FastifyPluginAsync = async (fastify, opts) => {
     return { offset, limit };
   };
 
-  fastify.get<{ Querystring: { offset?: string; limit?: string, classId } }>(
+  fastify.get<{ Querystring: { offset?: string; limit?: string; classId } }>(
     "/",
     { preValidation: [fastify.authenticate] },
     async (request, reply) => {
@@ -63,6 +63,18 @@ const quizRoutes: FastifyPluginAsync = async (fastify, opts) => {
     async (request, reply) => {
       const { title, content } = request.body;
       try {
+        // Check for an existing quiz with the same title, createdBy, and client
+        const existingQuiz = await Quiz.findOne({
+          title,
+          createdBy: request.user._id,
+          client: request.user.client,
+        });
+
+        if (existingQuiz) {
+          return reply
+            .code(409)
+            .send({ error: "Quiz with this title already exists" });
+        }
         const externalApiResponse = await axios.post(
           `${process.env.QUIZ_GENERATION_API_URL}/generate_mcq`,
           { text: content },
@@ -74,7 +86,7 @@ const quizRoutes: FastifyPluginAsync = async (fastify, opts) => {
         );
         const questionsFromExternalAPI =
           externalApiResponse?.data?.mcq?.questions;
-        
+
         if (!questionsFromExternalAPI) {
           return reply.code(400).send({ error: "Failed to create quiz" });
         }

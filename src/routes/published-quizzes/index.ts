@@ -46,7 +46,7 @@ const publishedQuizRoutes: FastifyPluginAsync = async (fastify, opts) => {
           }
 
           const quizResults = await QuizResult.find({
-            studentId: userId
+            studentId: userId,
           }).distinct("publishedQuizId");
 
           query = {
@@ -69,7 +69,6 @@ const publishedQuizRoutes: FastifyPluginAsync = async (fastify, opts) => {
           query = {
             ...query,
             classId: { $in: classIds },
-            dueDate: { $gte: currentDate },
           };
         }
 
@@ -98,6 +97,19 @@ const publishedQuizRoutes: FastifyPluginAsync = async (fastify, opts) => {
         const { quizId, classId, dueDate } = request.body;
         const clientId = request.user.client;
         const createdBy = request.user._id;
+
+        // Check if the quiz has already been published to the class
+        const existingQuiz = await PublishedQuiz.findOne({
+          quizId,
+          classId,
+          client: clientId,
+        });
+
+        if (existingQuiz) {
+          return reply
+            .status(409) // HTTP 409 Conflict
+            .send({ error: "Quiz has already been published to this class" });
+        }
 
         const newQuiz = new PublishedQuiz({
           quizId,

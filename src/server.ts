@@ -40,7 +40,7 @@ server.addHook("onClose", (_instance, done) => {
   closeListeners.uninstall();
   done();
 });
-
+/* 
 // Start listening.
 void server.listen({
   port: Number(process.env.PORT ?? 3000),
@@ -62,6 +62,6 @@ void server.ready((err) => {
   server.log.info(
     `Server listening on port ${Number(process.env.PORT ?? 3000)}`,
   );
-});
+}); */
 
 export { server as app };

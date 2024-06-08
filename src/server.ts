@@ -1,7 +1,7 @@
 // Require library to exit fastify process, gracefully (if possible)
 /* import closeWithGrace from "close-with-grace"; */
 import * as dotenv from "dotenv";
-// Require the framework
+// Require the fastify framework
 import Fastify from "fastify";
 
 /* Import { initGraphql } from "./graphql"; */

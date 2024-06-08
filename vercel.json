@@ -5,5 +5,10 @@
       "destination": "/api"
     }
   ],
-  "regions": ["fra1"]
+  "regions": ["fra1"],
+  "installCommand": "pnpm install",
+  "buildCommand": "pnpm build",
+  "startCommand": "pnpm start",
+  "testCommand": "pnpm test",
+  "devCommand": "pnpm dev"
 }

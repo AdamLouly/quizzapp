@@ -74,19 +74,21 @@ const quizResultRoutes: FastifyPluginAsync = async (fastify, opts) => {
     };
   }>("/", { preValidation: [fastify.authenticate] }, async (request, reply) => {
     try {
-      const currentDate = new Date();
-
       // Fetch classes in which the user is enrolled
       const userClasses = await Class.find({ students: request.user._id });
 
       // Use class IDs to filter published quizzes
       const publishedQuizzes = await PublishedQuiz.find({
-        dueDate: { $lt: currentDate },
         classId: { $in: userClasses.map((c) => c._id) }, // Filter by user's classes
       })
         .populate("quizId")
         .sort({ dueDate: -1 })
         .lean();
+
+      // Create a map of published quiz IDs to due dates
+      const publishedQuizMap = new Map(
+        publishedQuizzes.map((pq) => [pq._id.toString(), pq.dueDate]),
+      );
 
       const quizResults = await QuizResult.find({
         studentId: request.user._id,
@@ -96,16 +98,14 @@ const quizResultRoutes: FastifyPluginAsync = async (fastify, opts) => {
         .sort({ createdAt: -1 })
         .lean();
 
-      /* const filteredPublishedQuizzes = publishedQuizzes.filter(
-        (publishedQuiz) =>
-          !quizResults.some((quizResult) =>
-            quizResult.publishedQuizId.equals(publishedQuiz._id),
-          ),
-      ); */
+      // Attach the due date to each quiz result
+      const resultsWithDueDates = quizResults.map((qr) => ({
+        ...qr,
+        dueDate: publishedQuizMap.get(qr.publishedQuizId.toString()),
+      }));
 
       reply.send({
-        quizzes: quizResults,
-        /* publishedQuizzes: filteredPublishedQuizzes, */
+        quizzes: resultsWithDueDates,
       });
     } catch (error) {
       console.log(error);

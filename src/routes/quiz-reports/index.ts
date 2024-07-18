@@ -3,6 +3,7 @@ import { QuizResult } from "../../models/QuizResult";
 import { Class } from "../../models/Class";
 import { PublishedQuiz } from "../../models/PublishedQuiz";
 import { Quiz } from "../../models/Quiz";
+import { User } from "../../models/User";
 
 const quizReportsRoutes: FastifyPluginAsync = async (fastify, _) => {
   const handleError = (reply, error) => {
@@ -60,11 +61,17 @@ const quizReportsRoutes: FastifyPluginAsync = async (fastify, _) => {
     try {
       const { offset = "0", limit = "10", classId, quizId } = request.query;
 
-      // Find the PublishedQuiz entries that match the given quizId
+      // Find the PublishedQuiz entries that match the given quizId and classId
       const publishedQuizIds = quizId
-        ? await PublishedQuiz.find({ quizId: quizId }, "_id").lean()
+        ? await PublishedQuiz.find(
+            { quizId: quizId, classId: classId },
+            "_id dueDate",
+          ).lean()
         : [];
       const publishedQuizIdArray = publishedQuizIds.map((pq) => pq._id);
+      const publishedQuizMap = new Map(
+        publishedQuizIds.map((pq) => [pq._id.toString(), pq.dueDate]),
+      );
 
       // Construct a query for QuizResult using the retrieved publishedQuizIds
       const quizResultQuery: any = {
@@ -80,15 +87,21 @@ const quizReportsRoutes: FastifyPluginAsync = async (fastify, _) => {
         .populate("studentId")
         .lean();
 
+      // Add the 'passed' field to quizResults
+      const updatedQuizResults = quizResults.map((qr) => ({
+        ...qr,
+        passed: true,
+        dueDate: qr.publishedQuizId.dueDate,
+      }));
+
       // Get unique student IDs who participated in the quiz
       const studentIds = [
-        ...new Set(quizResults.map((qr) => qr.studentId.toString())),
+        ...new Set(quizResults.map((qr) => qr.studentId._id.toString())),
       ];
 
-      // Calculate the total number of students in the class
-      const totalStudents = classId
-        ? await Class.countDocuments({ _id: classId })
-        : 0;
+      // Retrieve the class to get the total number of students
+      const classInfo = await Class.findById(classId).lean();
+      const totalStudents = classInfo ? classInfo.students.length : 0;
 
       // Calculate participation percentage
       const participationPercentage =
@@ -96,15 +109,52 @@ const quizReportsRoutes: FastifyPluginAsync = async (fastify, _) => {
           ? ((studentIds.length / totalStudents) * 100).toFixed(2)
           : "0.00";
 
+      // Identify students who didn't pass the quiz
+      const studentsWhoDidNotPass = classInfo.students.filter(
+        (studentId) => !studentIds.includes(studentId.toString()),
+      );
+
+      // Fetch usernames for students who didn't pass
+      const studentInfos = await User.find(
+        { _id: { $in: studentsWhoDidNotPass } },
+        "_id username",
+      ).lean();
+      const studentInfoMap = new Map(
+        studentInfos.map((info) => [info._id.toString(), info.username]),
+      );
+
+      // Create dummy quiz results for students who didn't pass
+      const dummyResults = studentsWhoDidNotPass.map((studentId) => ({
+        studentId: {
+          _id: studentId,
+          username: studentInfoMap.get(studentId.toString()) || "unknown", // Fetch the username if available
+        },
+        publishedQuizId: {
+          _id: publishedQuizIdArray[0],
+          quizId: quizId,
+          classId: classId,
+          dueDate:
+            publishedQuizMap.get(publishedQuizIdArray[0].toString()) ||
+            new Date()
+        },
+        quizId: quizId,
+        passed: false,
+        score: 0
+      }));
+
+      // Merge dummy results with actual quiz results
+      const allQuizResults = [...updatedQuizResults, ...dummyResults];
+
       reply.send({
-        quizResults,
+        quizResults: allQuizResults,
         participationPercentage,
-        totalCount: quizResults.length,
+        totalCount: allQuizResults.length,
         offset,
         limit,
       });
     } catch (error) {
-      handleError(reply, error);
+      console.log(error);
+      handleError(reply, "Internal Server Error");
     }
   });
 };

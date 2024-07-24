@@ -42,7 +42,7 @@ server.addHook("onClose", (_instance, done) => {
 });
 
 // Start listening.
-void server.listen({
+/* void server.listen({
   port: Number(process.env.PORT ?? 3000),
   host: process.env.SERVER_HOSTNAME ?? "127.0.0.1",
 });
@@ -62,6 +62,6 @@ void server.ready((err) => {
   server.log.info(
     `Server listening on port ${Number(process.env.PORT ?? 3000)}`,
   );
-});
+}); */
 
 export { server as app };
